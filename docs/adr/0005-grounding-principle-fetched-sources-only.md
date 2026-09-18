@@ -1,0 +1,3 @@
+# AI-generated content may only assert facts from a fetched source
+
+The product's core value proposition is trustworthy, non-fabricated tailoring. Any claim in a Tailored Resume or Tailored Cover Letter — about the Candidate or about the Company — must trace to something actually fetched (the Profile, the Job Opportunity content, or a single Company lookup), never invented. This is a product-wide constraint rather than a one-off prompting choice, and it directly motivated keeping v1 company research to basic firmographic lookups (see [0003](./0003-v1-scope-exclusions.md)): deeper personalization would otherwise pressure the AI toward filling gaps with plausible-sounding fabrication.
