@@ -87,3 +87,13 @@ npx prettier --check <changed-files>
 uv run --project backend black --check backend
 uv run --project backend isort --check-only backend
 ```
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues on `RRFayad/job-assistant`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context layout: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
