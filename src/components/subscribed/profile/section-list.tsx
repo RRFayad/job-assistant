@@ -4,14 +4,22 @@ import type { Dispatch } from "react";
 import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { ProfileSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
 import { EntriesSectionEditor } from "./entries-section-editor";
 import { ListSectionEditor } from "./list-section-editor";
+import { PairsSectionEditor } from "./pairs-section-editor";
 import type { ProfileAction } from "./profile-reducer";
 import { RichTextField } from "./rich-text-field";
 import { SectionShell } from "./section-shell";
+import { TagsSectionEditor } from "./tags-section-editor";
 
 type SectionListProps = {
   sections: ProfileSection[];
@@ -21,8 +29,22 @@ type SectionListProps = {
 
 const styles = {
   list: tw("space-y-4"),
-  unsupported: tw("text-sm text-muted-foreground italic"),
 };
+
+// A Record (not a plain array) so adding a 6th ProfileSection variant fails
+// to compile here until the "Add section" menu is updated for it too.
+const SECTION_TYPE_LABELS: Record<ProfileSection["type"], string> = {
+  text: "Text",
+  tags: "Tags",
+  entries: "Entries",
+  list: "List",
+  pairs: "Pairs",
+};
+
+const SECTION_TYPE_ENTRIES = Object.entries(SECTION_TYPE_LABELS) as [
+  ProfileSection["type"],
+  string,
+][];
 
 export const SectionList = ({
   sections,
@@ -86,22 +108,47 @@ export const SectionList = ({
               }
             />
           )}
-          {(section.type === "tags" || section.type === "pairs") && (
-            <p className={styles.unsupported}>
-              This section type isn&apos;t editable yet.
-            </p>
+          {section.type === "tags" && (
+            <TagsSectionEditor
+              section={section}
+              onChange={(next) =>
+                dispatch({ type: "UPDATE_SECTION", section: next })
+              }
+            />
+          )}
+          {section.type === "pairs" && (
+            <PairsSectionEditor
+              section={section}
+              onChange={(next) =>
+                dispatch({ type: "UPDATE_SECTION", section: next })
+              }
+            />
           )}
         </SectionShell>
       ))}
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => dispatch({ type: "ADD_SECTION" })}
-      >
-        <PlusIcon />
-        Add section
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button type="button" variant="outline">
+              <PlusIcon />
+              Add section
+            </Button>
+          }
+        />
+        <DropdownMenuContent>
+          {SECTION_TYPE_ENTRIES.map(([type, label]) => (
+            <DropdownMenuItem
+              key={type}
+              onClick={() =>
+                dispatch({ type: "ADD_SECTION", sectionType: type })
+              }
+            >
+              {label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

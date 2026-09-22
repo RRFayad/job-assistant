@@ -6,18 +6,29 @@ import type {
 
 export type ProfileAction =
   | { type: "UPDATE_HEADER"; header: ProfileHeader }
-  | { type: "ADD_SECTION" }
+  | { type: "ADD_SECTION"; sectionType: ProfileSection["type"] }
   | { type: "REMOVE_SECTION"; sectionId: string }
   | { type: "RENAME_SECTION"; sectionId: string; title: string }
   | { type: "UPDATE_SECTION"; section: ProfileSection }
   | { type: "MOVE_SECTION"; sectionId: string; direction: "up" | "down" };
 
-const createTextSection = (): ProfileSection => ({
-  id: crypto.randomUUID(),
-  type: "text",
-  title: "New Section",
-  body: "",
-});
+const createSection = (sectionType: ProfileSection["type"]): ProfileSection => {
+  const id = crypto.randomUUID();
+  const title = "New Section";
+
+  switch (sectionType) {
+    case "text":
+      return { id, type: "text", title, body: "" };
+    case "tags":
+      return { id, type: "tags", title, categories: [] };
+    case "entries":
+      return { id, type: "entries", title, entries: [] };
+    case "list":
+      return { id, type: "list", title, items: [] };
+    case "pairs":
+      return { id, type: "pairs", title, pairs: [] };
+  }
+};
 
 const moveSection = (
   sections: ProfileSection[],
@@ -45,7 +56,10 @@ export const profileReducer = (
       return { ...state, header: action.header };
 
     case "ADD_SECTION":
-      return { ...state, sections: [...state.sections, createTextSection()] };
+      return {
+        ...state,
+        sections: [...state.sections, createSection(action.sectionType)],
+      };
 
     case "REMOVE_SECTION":
       return {

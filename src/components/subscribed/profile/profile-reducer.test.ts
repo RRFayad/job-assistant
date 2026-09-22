@@ -61,7 +61,10 @@ describe("profileReducer", () => {
   });
 
   it("ADD_SECTION appends a new Text section with a placeholder title", () => {
-    const result = profileReducer(profile, { type: "ADD_SECTION" });
+    const result = profileReducer(profile, {
+      type: "ADD_SECTION",
+      sectionType: "text",
+    });
 
     expect(result.sections).toHaveLength(3);
     const added = result.sections[2];
@@ -72,10 +75,45 @@ describe("profileReducer", () => {
   });
 
   it("ADD_SECTION gives each new section a unique id", () => {
-    const once = profileReducer(profile, { type: "ADD_SECTION" });
-    const twice = profileReducer(once, { type: "ADD_SECTION" });
+    const once = profileReducer(profile, {
+      type: "ADD_SECTION",
+      sectionType: "text",
+    });
+    const twice = profileReducer(once, {
+      type: "ADD_SECTION",
+      sectionType: "text",
+    });
 
     expect(twice.sections[2].id).not.toBe(twice.sections[3].id);
+  });
+
+  it("ADD_SECTION creates an empty section matching the requested type", () => {
+    const tags = profileReducer(profile, {
+      type: "ADD_SECTION",
+      sectionType: "tags",
+    });
+    expect(tags.sections[2]).toMatchObject({ type: "tags", categories: [] });
+
+    const entries = profileReducer(profile, {
+      type: "ADD_SECTION",
+      sectionType: "entries",
+    });
+    expect(entries.sections[2]).toMatchObject({
+      type: "entries",
+      entries: [],
+    });
+
+    const list = profileReducer(profile, {
+      type: "ADD_SECTION",
+      sectionType: "list",
+    });
+    expect(list.sections[2]).toMatchObject({ type: "list", items: [] });
+
+    const pairs = profileReducer(profile, {
+      type: "ADD_SECTION",
+      sectionType: "pairs",
+    });
+    expect(pairs.sections[2]).toMatchObject({ type: "pairs", pairs: [] });
   });
 
   it("REMOVE_SECTION removes the matching section", () => {
