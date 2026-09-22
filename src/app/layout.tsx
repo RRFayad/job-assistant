@@ -23,8 +23,9 @@ const styles = {
 };
 
 export const metadata: Metadata = {
-  title: "SaaS Starter Kit",
-  description: "A full-stack foundation for modern SaaS products.",
+  title: "Job Assistant",
+  description:
+    "An AI application assistant that tailors your resume to a specific job.",
   icons: {
     icon: "/icon.svg",
   },

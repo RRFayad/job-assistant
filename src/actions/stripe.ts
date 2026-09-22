@@ -26,7 +26,7 @@ const redirectToCustomerPortal = async (customerId: string): Promise<never> => {
   const frontendUrl = getEnvVar("FRONTEND_URL");
   const portalUrl = await createStripeCustomerPortalSession({
     customerId,
-    returnUrl: `${frontendUrl}${routes.workspace.overview}`,
+    returnUrl: `${frontendUrl}${routes.workspace.profile}`,
   });
 
   redirect(portalUrl);

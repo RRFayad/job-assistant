@@ -20,7 +20,7 @@ const PricingPage = async () => {
   const subscription = await getCurrentUserSubscription();
 
   if (isSubscriptionActive(subscription)) {
-    redirect(routes.workspace.overview);
+    redirect(routes.workspace.profile);
   }
 
   const plans = getAvailableStripePlans();

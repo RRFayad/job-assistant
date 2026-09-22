@@ -6,7 +6,6 @@ import {
   BriefcaseIcon,
   CreditCardIcon,
   FileTextIcon,
-  LayoutDashboardIcon,
   SparklesIcon,
   UserRoundIcon,
 } from "lucide-react";
@@ -32,15 +31,8 @@ import { routes } from "@/lib/routes";
 
 const workspaceNavigation = [
   {
-    title: "Overview",
-    href: routes.workspace.overview,
-    icon: LayoutDashboardIcon,
-  },
-  {
-    // TODO: point at routes.workspace.profile once the real Profile page
-    // replaces the prototype at /workspace/profile-prototype.
     title: "Profile",
-    href: "/workspace/profile-prototype",
+    href: routes.workspace.profile,
     icon: FileTextIcon,
   },
   { title: "Applications", href: null, icon: BriefcaseIcon },
@@ -83,7 +75,7 @@ export const AppSidebar = () => {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className={styles.header}>
-        <Link href={routes.workspace.overview} className={styles.brand}>
+        <Link href={routes.workspace.profile} className={styles.brand}>
           <SparklesIcon className={styles.brandIcon} />
           <span className={styles.brandLabel}>Job Assistant</span>
         </Link>

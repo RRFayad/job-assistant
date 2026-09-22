@@ -14,7 +14,7 @@ type AppHeaderProps = {
 };
 
 const routeContext = {
-  [routes.workspace.overview]: { section: "Workspace", page: "Overview" },
+  [routes.workspace.profile]: { section: "Workspace", page: "Profile" },
   [routes.settings.billing]: { section: "Settings", page: "Billing" },
   [routes.settings.account]: { section: "Settings", page: "Account" },
 } as const;

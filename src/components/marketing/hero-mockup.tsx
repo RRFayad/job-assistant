@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import {
   BarChart3Icon,
   CreditCardIcon,
-  LayoutDashboardIcon,
+  FileTextIcon,
   SettingsIcon,
   TrendingUpIcon,
   UsersIcon,
@@ -17,7 +17,7 @@ import { routes } from "@/lib/routes";
 import { cn, tw } from "@/lib/utils";
 
 const navItems = [
-  { icon: LayoutDashboardIcon, label: "Overview", active: true },
+  { icon: FileTextIcon, label: "Profile", active: true },
   { icon: BarChart3Icon, label: "Analytics" },
   { icon: UsersIcon, label: "Customers" },
   { icon: CreditCardIcon, label: "Billing" },
@@ -90,7 +90,7 @@ export const HeroMockup = ({ className }: { className?: string }) => {
       <div aria-hidden className={styles.glow} />
 
       <BrowserMockup
-        url={`starter-kit${routes.workspace.overview}`}
+        url={`starter-kit${routes.workspace.profile}`}
         className={styles.browser}
       >
         <BorderBeam size={96} duration={10} />
@@ -117,7 +117,7 @@ export const HeroMockup = ({ className }: { className?: string }) => {
           {/* Main */}
           <div className={styles.content}>
             <div className={styles.contentHeader}>
-              <span className={styles.contentTitle}>Overview</span>
+              <span className={styles.contentTitle}>Profile</span>
               <span className={styles.period}>Last 30 days</span>
             </div>
 

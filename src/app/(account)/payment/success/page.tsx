@@ -28,10 +28,10 @@ const Success = () => {
           shortly.
         </p>
         <Button className={styles.action} asChild>
-          <Link href={routes.workspace.overview}>Go to workspace now</Link>
+          <Link href={routes.workspace.profile}>Go to workspace now</Link>
         </Button>
         <RedirectAfterDelay
-          href={routes.workspace.overview}
+          href={routes.workspace.profile}
           destination="your workspace"
         />
       </section>

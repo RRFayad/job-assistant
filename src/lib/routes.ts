@@ -8,7 +8,7 @@ export const routes = {
     cancelled: "/payment/cancelled",
   },
   workspace: {
-    overview: "/workspace/overview",
+    profile: "/workspace/profile",
     // For a dynamic path, add a function and a matching [param]/page.tsx folder:
     // item: (itemId: string) => `/workspace/items/${encodeURIComponent(itemId)}`,
   },
