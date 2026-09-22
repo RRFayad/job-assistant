@@ -1,6 +1,6 @@
 import { fetchProfiles } from "@/lib/backend/profile";
 import { PageHeader } from "@/components/subscribed/page-header";
-import { ProfileHeaderForm } from "@/components/subscribed/profile/profile-header-form";
+import { ProfileEditor } from "@/components/subscribed/profile/profile-editor";
 import { tw } from "@/lib/utils";
 
 const styles = {
@@ -41,7 +41,7 @@ const ProfilePage = async () => {
         title="Profile"
         description="Build and maintain the Profiles your tailored resumes are grounded in."
       />
-      <ProfileHeaderForm profile={profile} />
+      <ProfileEditor profile={profile} />
     </main>
   );
 };

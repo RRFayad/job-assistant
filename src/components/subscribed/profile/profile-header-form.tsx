@@ -1,23 +1,21 @@
 "use client";
 
-import { useReducer } from "react";
+import type { Dispatch } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type {
-  Profile,
-  ProfileHeader,
-  ProfileLink,
-} from "@/lib/backend/profile";
+import type { ProfileHeader, ProfileLink } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
-import { profileReducer } from "./profile-reducer";
-import { useAutosaveProfile } from "./use-autosave-profile";
+import type { ProfileAction } from "./profile-reducer";
+import type { SaveStatus } from "./use-autosave-profile";
 
 const MAX_LINKS = 5;
 
 type ProfileHeaderFormProps = {
-  profile: Profile;
+  header: ProfileHeader;
+  saveStatus: SaveStatus;
+  dispatch: Dispatch<ProfileAction>;
 };
 
 const styles = {
@@ -32,9 +30,6 @@ const styles = {
   links: tw("space-y-3"),
   linksHeader: tw("flex items-center justify-between"),
   linkRow: tw("flex items-center gap-2"),
-  sections: tw(
-    "list-disc space-y-1 rounded-r-lg border-l-4 py-2 pr-2 pl-6 text-sm text-muted-foreground",
-  ),
 };
 
 const createLink = (): ProfileLink => ({
@@ -44,12 +39,10 @@ const createLink = (): ProfileLink => ({
 });
 
 export const ProfileHeaderForm = ({
-  profile: initialProfile,
+  header,
+  saveStatus,
+  dispatch,
 }: ProfileHeaderFormProps) => {
-  const [profile, dispatch] = useReducer(profileReducer, initialProfile);
-  const saveStatus = useAutosaveProfile(profile);
-  const { header } = profile;
-
   const updateHeader = (patch: Partial<ProfileHeader>) => {
     dispatch({ type: "UPDATE_HEADER", header: { ...header, ...patch } });
   };
@@ -72,124 +65,111 @@ export const ProfileHeaderForm = ({
   };
 
   return (
-    <>
-      <section
-        className={styles.card}
-        style={{ borderTopColor: header.primaryColor }}
-      >
-        <div className={styles.statusRow}>
-          <h2 className={styles.heading}>Header</h2>
-          <p className={styles.status}>
-            {saveStatus === "saving" && "Saving…"}
-            {saveStatus === "saved" && "All changes saved"}
-          </p>
-        </div>
+    <section
+      className={styles.card}
+      style={{ borderTopColor: header.primaryColor }}
+    >
+      <div className={styles.statusRow}>
+        <h2 className={styles.heading}>Header</h2>
+        <p className={styles.status}>
+          {saveStatus === "saving" && "Saving…"}
+          {saveStatus === "saved" && "All changes saved"}
+        </p>
+      </div>
 
-        <div className={styles.fields}>
-          <label className={styles.field}>
-            <span className={styles.label}>Full name</span>
-            <Input
-              value={header.fullName}
-              onChange={(e) => updateHeader({ fullName: e.target.value })}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Career title</span>
-            <Input
-              value={header.careerTitle}
-              onChange={(e) => updateHeader({ careerTitle: e.target.value })}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Email</span>
-            <Input
-              type="email"
-              value={header.email}
-              onChange={(e) => updateHeader({ email: e.target.value })}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Phone</span>
-            <Input
-              value={header.phone}
-              onChange={(e) => updateHeader({ phone: e.target.value })}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Location</span>
-            <Input
-              value={header.location}
-              onChange={(e) => updateHeader({ location: e.target.value })}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Primary color</span>
-            <input
-              type="color"
-              className={styles.colorInput}
-              value={header.primaryColor}
-              onChange={(e) => updateHeader({ primaryColor: e.target.value })}
-            />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>Secondary color</span>
-            <input
-              type="color"
-              className={styles.colorInput}
-              value={header.secondaryColor}
-              onChange={(e) => updateHeader({ secondaryColor: e.target.value })}
-            />
-          </label>
-        </div>
+      <div className={styles.fields}>
+        <label className={styles.field}>
+          <span className={styles.label}>Full name</span>
+          <Input
+            value={header.fullName}
+            onChange={(e) => updateHeader({ fullName: e.target.value })}
+          />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Career title</span>
+          <Input
+            value={header.careerTitle}
+            onChange={(e) => updateHeader({ careerTitle: e.target.value })}
+          />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Email</span>
+          <Input
+            type="email"
+            value={header.email}
+            onChange={(e) => updateHeader({ email: e.target.value })}
+          />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Phone</span>
+          <Input
+            value={header.phone}
+            onChange={(e) => updateHeader({ phone: e.target.value })}
+          />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Location</span>
+          <Input
+            value={header.location}
+            onChange={(e) => updateHeader({ location: e.target.value })}
+          />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Primary color</span>
+          <input
+            type="color"
+            className={styles.colorInput}
+            value={header.primaryColor}
+            onChange={(e) => updateHeader({ primaryColor: e.target.value })}
+          />
+        </label>
+        <label className={styles.field}>
+          <span className={styles.label}>Secondary color</span>
+          <input
+            type="color"
+            className={styles.colorInput}
+            value={header.secondaryColor}
+            onChange={(e) => updateHeader({ secondaryColor: e.target.value })}
+          />
+        </label>
+      </div>
 
-        <div className={styles.links}>
-          <div className={styles.linksHeader}>
-            <span className={styles.label}>Links</span>
+      <div className={styles.links}>
+        <div className={styles.linksHeader}>
+          <span className={styles.label}>Links</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addLink}
+            disabled={header.links.length >= MAX_LINKS}
+          >
+            Add link
+          </Button>
+        </div>
+        {header.links.map((link) => (
+          <div key={link.id} className={styles.linkRow}>
+            <Input
+              placeholder="Label"
+              value={link.label}
+              onChange={(e) => updateLink(link.id, { label: e.target.value })}
+            />
+            <Input
+              placeholder="URL"
+              value={link.url}
+              onChange={(e) => updateLink(link.id, { url: e.target.value })}
+            />
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               size="sm"
-              onClick={addLink}
-              disabled={header.links.length >= MAX_LINKS}
+              onClick={() => removeLink(link.id)}
             >
-              Add link
+              Remove
             </Button>
           </div>
-          {header.links.map((link) => (
-            <div key={link.id} className={styles.linkRow}>
-              <Input
-                placeholder="Label"
-                value={link.label}
-                onChange={(e) => updateLink(link.id, { label: e.target.value })}
-              />
-              <Input
-                placeholder="URL"
-                value={link.url}
-                onChange={(e) => updateLink(link.id, { url: e.target.value })}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => removeLink(link.id)}
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {profile.sections.length > 0 && (
-        <ul
-          className={styles.sections}
-          style={{ borderLeftColor: header.secondaryColor }}
-        >
-          {profile.sections.map((section) => (
-            <li key={section.id}>{section.title}</li>
-          ))}
-        </ul>
-      )}
-    </>
+        ))}
+      </div>
+    </section>
   );
 };
