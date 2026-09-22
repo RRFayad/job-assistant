@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 import {
+  BriefcaseIcon,
   CreditCardIcon,
+  FileTextIcon,
   LayoutDashboardIcon,
   SparklesIcon,
   UserRoundIcon,
@@ -34,6 +36,14 @@ const workspaceNavigation = [
     href: routes.workspace.overview,
     icon: LayoutDashboardIcon,
   },
+  {
+    // TODO: point at routes.workspace.profile once the real Profile page
+    // replaces the prototype at /workspace/profile-prototype.
+    title: "Profile",
+    href: "/workspace/profile-prototype",
+    icon: FileTextIcon,
+  },
+  { title: "Applications", href: null, icon: BriefcaseIcon },
 ];
 
 const settingsNavigation = [
@@ -75,7 +85,7 @@ export const AppSidebar = () => {
       <SidebarHeader className={styles.header}>
         <Link href={routes.workspace.overview} className={styles.brand}>
           <SparklesIcon className={styles.brandIcon} />
-          <span className={styles.brandLabel}>SaaS Starter Kit</span>
+          <span className={styles.brandLabel}>Job Assistant</span>
         </Link>
         {!isMobile && state === "expanded" && (
           <SidebarTrigger className={styles.desktopSidebarTrigger} />
@@ -87,10 +97,10 @@ export const AppSidebar = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               {workspaceNavigation.map((item) => (
-                <SidebarMenuItem key={item.href}>
+                <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    render={<Link href={item.href} />}
+                    isActive={item.href !== null && pathname === item.href}
+                    render={item.href ? <Link href={item.href} /> : undefined}
                     tooltip={item.title}
                   >
                     <item.icon />

@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 import { tw } from "@/lib/utils";
@@ -40,6 +41,7 @@ const RootLayout = ({ children }: LayoutProps<"/">) => {
             disableTransitionOnChange
           >
             <TooltipProvider>{children}</TooltipProvider>
+            <Toaster />
           </ThemeProvider>
         </ClerkProvider>
       </body>

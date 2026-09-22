@@ -1,0 +1,5 @@
+# Collapse Baseline into Profile: up to three independent Profiles, no shared master layer
+
+**Supersedes:** [0001](./0001-profile-baseline-two-layer-model.md).
+
+ADR-0001 set up a two-layer model — one shared Profile holding master facts, plus up to three Baselines as differently-framed resume angles on it — specifically to avoid duplicating facts across framings. Building the actual Profile editor showed this distinction was never realized: everything built is a single, complete resume-shaped entity (header, ordered sections, theme colors). There is no separate "master facts" surface distinct from a resume. We collapsed the model to match: a Candidate has up to three **Profiles** (same cap as before), each independent and complete, created from a blank Template, an uploaded resume, or by duplicating an existing Profile as a one-time starting point. The explicit trade-off: duplicated Profiles do not stay in sync — updating one does not update the others, reintroducing the duplication risk ADR-0001 was written to avoid — judged an acceptable cost for a model that's simpler and matches what was actually built.

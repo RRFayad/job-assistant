@@ -13,49 +13,33 @@ The job-seeker using the platform to search for and apply to roles. Distinct fro
 _Avoid_: User (in domain context), applicant, job seeker
 
 **Profile**:
-The Candidate's master pool of verified facts — work experience, education, skills, and projects — extracted from an uploaded resume and/or entered manually. The single source of truth for Grounding claims about the Candidate.
-_Avoid_: resume data, CV data
+One of up to three full resume/cover-letter entities a Candidate maintains — each with its own header, ordered sections, and theme colors — created by uploading a resume, starting from a blank Template, or duplicating an existing Profile as a starting point. Profiles are independent once created: editing one does not update the others. The single source of truth for Grounding claims about the Candidate for whichever Profile is in use.
+_Avoid_: Baseline, career track, career goal, resume version, resume data, CV data
 
-**Baseline**:
-One of up to three Candidate-defined angles on the same Profile, each pairing a resume document and a cover letter document built from the shared Templates and framed toward a particular role (e.g. Frontend vs. Full-Stack vs. Full-Stack AI). All Baselines draw from the same Profile; they differ in framing, not in underlying facts.
-_Avoid_: career track, career goal, resume version
-
-**Resume Template / Cover Letter Template**:
-The single, universal empty Word document scaffold each Baseline's resume and cover letter are built on. One of each ships with the product; not user- or profession-specific in v1.
-_Avoid_: format, layout
+**Resume Template**:
+The single, universal empty Word document scaffold each Profile's resume is built on. Ships with the product; not user- or profession-specific in v1. Stored at `backend/templates/resume_template.docx`. A Cover Letter Template follows once Cover Letter itself is built (see ROADMAP.md — deferred past v1.0).
+_Avoid_: format, layout, CV
 
 **Preferences**:
-Candidate-level (not Baseline-level) job-search criteria used in matching: compensation range, company size, location, and sponsorship requirement.
+Candidate-level (not Profile-level) job-search criteria used in matching: compensation range, company size, location, and sponsorship requirement.
 _Avoid_: filters, settings
 
-### Job Application Flow
+### Job Matching & Tailoring
 
 **Job Opportunity**:
-A specific job posting identified by a URL the Candidate pastes, fetched once with no recurring monitoring. Exploratory Job Opportunities are not persisted; one is only saved once the Candidate confirms an Application against it.
+A specific job posting identified by a URL the Candidate pastes, fetched once with no recurring monitoring. Exploratory Job Opportunities are not persisted. Exactly what persists once the Candidate confirms intent to tailor is still being defined — v1.0 has no Application or Company entity to key that persistence off of (see ADR-0008); this gets resolved in the Job Matching/Tailoring scoping pass.
 _Avoid_: job posting, listing, job (ambiguous)
 
 **Match Assessment**:
-The AI's analysis of fit between a Job Opportunity and the Candidate's Preferences and a specific Baseline, including the AI's suggested Baseline pick. Ephemeral — never persisted unless the Candidate proceeds to confirm an Application.
+The AI's analysis of fit between a Job Opportunity and the Candidate's Preferences and a specific Profile — including which parts match, which don't, and the AI's suggested Profile pick. Ephemeral — never persisted unless the Candidate proceeds with tailoring.
 _Avoid_: match score, analysis (ambiguous alone)
-
-**Company**:
-A persisted entity (name, country, size/total employees, industry, source platform) representing an employer, created or updated when an Application is confirmed and deduplicated across multiple Applications to the same employer. Basic firmographic facts may be enriched via a single lookup; deep qualitative research is out of v1 (see ADR-0003).
-_Avoid_: employer
-
-**Application**:
-Created when the Candidate confirms intent to apply to a Job Opportunity. Snapshots the Job Opportunity, links to its Company and the Baseline used, and tracks progress through a status pipeline: Applied → Screening → Technical Interview(s) → Offer → Negotiation → {Accepted, Rejected, Withdrawn, Ghosted}. Carries the Tailored Resume and Tailored Cover Letter generated for it, plus fields like salary range, position name, and last follow-up date.
-_Avoid_: job tracker, pipeline entry
 
 ### Artifacts
 
 **Tailored Resume**:
-A Baseline's resume document, AI-edited for one specific Job Opportunity, delivered as a Word file with Track Changes on by default (see ADR-0004).
+A Profile's resume document, AI-edited for one specific Job Opportunity, delivered as a Word file with Track Changes on by default (see ADR-0004). The only tailored artifact v1.0 produces — see ADR-0008 for what's deferred.
 _Avoid_: adjusted resume, final resume
 
-**Tailored Cover Letter**:
-A Baseline's cover letter document, AI-edited for one specific Job Opportunity, incorporating Grounded Company facts. Delivered the same way as the Tailored Resume: Word file, Track Changes on by default.
-_Avoid_: application letter
-
 **Grounding**:
-The rule that any fact an AI-tailored document asserts must trace to a fetched source: the Profile for claims about the Candidate, the Job Opportunity content or a Company lookup for claims about the employer. Never fabricated (see ADR-0005).
+The rule that any fact an AI-tailored document asserts must trace to a fetched source — the relevant Profile for claims about the Candidate, the Job Opportunity content for claims about the role. Never fabricated (see ADR-0005).
 _Avoid_: hallucination-free, fact-checking
