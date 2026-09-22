@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import type { ProfileSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
+import { EntriesSectionEditor } from "./entries-section-editor";
+import { ListSectionEditor } from "./list-section-editor";
 import type { ProfileAction } from "./profile-reducer";
 import { RichTextField } from "./rich-text-field";
 import { SectionShell } from "./section-shell";
@@ -57,7 +59,7 @@ export const SectionList = ({
             dispatch({ type: "REMOVE_SECTION", sectionId: section.id })
           }
         >
-          {section.type === "text" ? (
+          {section.type === "text" && (
             <RichTextField
               value={section.body}
               onChange={(body) =>
@@ -67,7 +69,24 @@ export const SectionList = ({
                 })
               }
             />
-          ) : (
+          )}
+          {section.type === "entries" && (
+            <EntriesSectionEditor
+              section={section}
+              onChange={(next) =>
+                dispatch({ type: "UPDATE_SECTION", section: next })
+              }
+            />
+          )}
+          {section.type === "list" && (
+            <ListSectionEditor
+              section={section}
+              onChange={(next) =>
+                dispatch({ type: "UPDATE_SECTION", section: next })
+              }
+            />
+          )}
+          {(section.type === "tags" || section.type === "pairs") && (
             <p className={styles.unsupported}>
               This section type isn&apos;t editable yet.
             </p>
