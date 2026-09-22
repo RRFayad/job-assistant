@@ -1,6 +1,6 @@
 "use server";
 
-import { fetchBackendData } from "./client";
+import { fetchBackendData, saveBackendData } from "./client";
 
 export type ProfileLink = {
   id: string;
@@ -66,4 +66,8 @@ export type Profile = {
 
 export const fetchProfiles = async (): Promise<Profile[] | null> => {
   return fetchBackendData<Profile[]>("/profile/");
+};
+
+export const saveProfile = async (profile: Profile): Promise<boolean> => {
+  return saveBackendData(`/profile/${profile.id}`, profile);
 };

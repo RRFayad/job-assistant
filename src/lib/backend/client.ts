@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import axios from "axios";
+import axios, { type AxiosInstance } from "axios";
 
 import { getEnvVar } from "@/lib/utils";
 
@@ -27,15 +27,13 @@ export const getAuthenticatedBackendClient = async () => {
   });
 };
 
-export const fetchBackendData = async <T>(
-  endpoint: string,
-  logMessage = `Failed to fetch backend endpoint: ${endpoint}`,
+const callBackend = async <T>(
+  request: (client: AxiosInstance) => Promise<T>,
+  logMessage: string,
 ): Promise<T | null> => {
   try {
     const backendClient = await getAuthenticatedBackendClient();
-    const response = await backendClient.get<T>(endpoint);
-
-    return response.data;
+    return await request(backendClient);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error(logMessage, error.message);
@@ -44,4 +42,29 @@ export const fetchBackendData = async <T>(
 
     throw error;
   }
+};
+
+export const fetchBackendData = async <T>(
+  endpoint: string,
+  logMessage = `Failed to fetch backend endpoint: ${endpoint}`,
+): Promise<T | null> => {
+  const response = await callBackend(
+    (client) => client.get<T>(endpoint),
+    logMessage,
+  );
+
+  return response?.data ?? null;
+};
+
+export const saveBackendData = async <T>(
+  endpoint: string,
+  body: T,
+  logMessage = `Failed to save backend endpoint: ${endpoint}`,
+): Promise<boolean> => {
+  const response = await callBackend(
+    (client) => client.put(endpoint, body),
+    logMessage,
+  );
+
+  return response !== null;
 };

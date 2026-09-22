@@ -143,3 +143,11 @@ SEED_PROFILES: list[Profile] = [
 @router.get("/", response_model=list[Profile], status_code=status.HTTP_200_OK)
 def get_profiles(user: current_user_dependency) -> list[Profile]:
     return SEED_PROFILES
+
+
+@router.put("/{profile_id}", status_code=status.HTTP_204_NO_CONTENT)
+def save_profile(
+    profile_id: str, profile: Profile, user: current_user_dependency
+) -> None:
+    """Accepts and discards the payload — no persistence yet (see #4)."""
+    return None

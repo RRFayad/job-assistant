@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { fetchBackendData } from "./client";
-import { fetchProfiles, type Profile } from "./profile";
+import { fetchBackendData, saveBackendData } from "./client";
+import { fetchProfiles, saveProfile, type Profile } from "./profile";
 
 vi.mock("./client", () => ({
   fetchBackendData: vi.fn(),
+  saveBackendData: vi.fn(),
 }));
 
 const profile: Profile = {
@@ -39,5 +40,24 @@ describe("fetchProfiles", () => {
     const result = await fetchProfiles();
 
     expect(result).toBeNull();
+  });
+});
+
+describe("saveProfile", () => {
+  it("saves to /profile/{id} and reports success", async () => {
+    vi.mocked(saveBackendData).mockResolvedValue(true);
+
+    const result = await saveProfile(profile);
+
+    expect(saveBackendData).toHaveBeenCalledWith("/profile/1", profile);
+    expect(result).toBe(true);
+  });
+
+  it("reports failure when the backend call fails", async () => {
+    vi.mocked(saveBackendData).mockResolvedValue(false);
+
+    const result = await saveProfile(profile);
+
+    expect(result).toBe(false);
   });
 });
