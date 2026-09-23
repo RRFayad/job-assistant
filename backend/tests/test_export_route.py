@@ -50,6 +50,6 @@ def test_export_returns_a_valid_docx_with_the_profile_content() -> None:
     assert "Jane_Doe.docx" in response.headers["content-disposition"]
 
     document = Document(io.BytesIO(response.content))
-    header_texts = [p.text for p in document.tables[0].rows[0].cells[1].paragraphs]
+    header_texts = [p.text for p in document.tables[0].rows[0].cells[-1].paragraphs]
     assert "Jane Doe" in header_texts
     assert any(p.text == "Summary" for p in document.paragraphs)

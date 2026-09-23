@@ -1,7 +1,10 @@
+import base64
 import io
 
+import pytest
 from docx import Document
 from docx.oxml.ns import qn
+from PIL import Image
 
 from schemas.profile import (
     EntriesSection,
@@ -17,6 +20,16 @@ from schemas.profile import (
     TextSection,
 )
 from services.docx_export import build_resume_document
+
+
+def _square_picture_data_url(size: int = 400) -> str:
+    """A square test photo — deliberately the wrong aspect ratio for the
+    picture frame (~1.11:1), to exercise the center-crop path."""
+    image = Image.new("RGB", (size, size), color=(200, 100, 50))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    encoded = base64.b64encode(buffer.getvalue()).decode()
+    return f"data:image/png;base64,{encoded}"
 
 
 def _make_profile(**overrides) -> Profile:
@@ -54,8 +67,10 @@ def _paragraph_texts(document: Document) -> list[str]:
 
 def _header_cell(document: Document):
     """The header banner (name/title/contact/links) lives in a table cell
-    cloned from the template, not in the document's top-level paragraphs."""
-    return document.tables[0].rows[0].cells[1]
+    cloned from the template, not in the document's top-level paragraphs —
+    the last cell either way, since the no-picture layout is a single
+    full-width cell while the picture layout has a picture column first."""
+    return document.tables[0].rows[0].cells[-1]
 
 
 def test_includes_header_fields() -> None:
@@ -332,3 +347,95 @@ def test_page_margins_and_size_match_the_template() -> None:
     section = document.sections[0]
     assert section.left_margin == section.right_margin == 457200
     assert section.top_margin == section.bottom_margin == 457200
+
+
+def test_no_picture_uses_the_single_column_header_layout() -> None:
+    profile = _make_profile()
+    document = build_resume_document(profile)
+
+    assert len(document.tables[0].columns) == 1
+
+
+def test_picture_uses_the_two_column_header_layout() -> None:
+    profile = _make_profile(
+        header=ProfileHeader(
+            full_name="Jane Doe",
+            career_title="AI Engineer",
+            email="jane@example.com",
+            phone="555-0100",
+            location="Remote",
+            links=[],
+            primary_color="#2563eb",
+            secondary_color="#7c3aed",
+            picture=_square_picture_data_url(),
+        )
+    )
+    document = _reload(build_resume_document(profile))
+
+    assert len(document.tables[0].columns) == 2
+
+
+def test_picture_is_cropped_to_the_frames_exact_aspect_ratio() -> None:
+    profile = _make_profile(
+        header=ProfileHeader(
+            full_name="Jane Doe",
+            career_title="AI Engineer",
+            email="jane@example.com",
+            phone="555-0100",
+            location="Remote",
+            links=[],
+            primary_color="#2563eb",
+            secondary_color="#7c3aed",
+            picture=_square_picture_data_url(),
+        )
+    )
+    document = _reload(build_resume_document(profile))
+
+    drawing = next(document.element.body.iter(qn("w:drawing")))
+    extent = next(drawing.iter(qn("wp:extent")))
+    target_ratio = int(extent.get("cx")) / int(extent.get("cy"))
+
+    blip = next(drawing.iter(qn("a:blip")))
+    r_id = blip.get(qn("r:embed"))
+    embedded_image = document.part.rels[r_id].target_part.image
+    embedded_ratio = embedded_image.px_width / embedded_image.px_height
+
+    assert embedded_ratio == pytest.approx(target_ratio, rel=0.01)
+    # The frame's own size is untouched regardless of what was uploaded —
+    # that's what "exact same width and height" in the frame means.
+    assert extent.get("cx") == "1504543"
+    assert extent.get("cy") == "1357200"
+
+
+def test_picture_crop_replaces_the_templates_own_srcrect() -> None:
+    profile = _make_profile(
+        header=ProfileHeader(
+            full_name="Jane Doe",
+            career_title="AI Engineer",
+            email="jane@example.com",
+            phone="555-0100",
+            location="Remote",
+            links=[],
+            primary_color="#2563eb",
+            secondary_color="#7c3aed",
+            picture=_square_picture_data_url(),
+        )
+    )
+    document = _reload(build_resume_document(profile))
+
+    drawing = next(document.element.body.iter(qn("w:drawing")))
+    blip_fill = next(drawing.iter(qn("pic:blipFill")))
+    # The template's own srcRect crop is tuned to its placeholder photo and
+    # would distort a different one — the uploaded photo is already cropped
+    # to the right aspect ratio in Python, so no XML-level crop should apply.
+    assert blip_fill.find(qn("a:srcRect")) is None
+
+
+def test_unused_placeholder_image_relationship_is_removed_without_a_picture() -> None:
+    profile = _make_profile()
+    document = _reload(build_resume_document(profile))
+
+    image_targets = [
+        rel.target_ref for rel in document.part.rels.values() if "image" in rel.reltype
+    ]
+    assert image_targets == []

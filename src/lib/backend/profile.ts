@@ -23,6 +23,8 @@ export type ProfileHeader = {
   links: ProfileLink[];
   primaryColor: string;
   secondaryColor: string;
+  // A data URL, or undefined/null for the no-picture export layout.
+  picture?: string | null;
 };
 
 export type TextSection = {

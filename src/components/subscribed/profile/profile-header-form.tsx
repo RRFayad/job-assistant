@@ -1,7 +1,8 @@
 "use client";
 
-import { PlusIcon, SparklesIcon, XIcon } from "lucide-react";
-import { useState, type Dispatch } from "react";
+import { ImageIcon, PlusIcon, SparklesIcon, XIcon } from "lucide-react";
+import { useRef, useState, type ChangeEvent, type Dispatch } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,10 @@ import { cn, tw } from "@/lib/utils";
 
 import { AskAiPanel } from "./ask-ai-panel";
 import { bareInputClass, iconButtonClass } from "./editor-field-styles";
+import {
+  MAX_PICTURE_UPLOAD_BYTES,
+  readAndResizePicture,
+} from "./picture-upload";
 import type { ProfileAction } from "./profile-reducer";
 
 const MAX_LINKS = 5;
@@ -43,6 +48,15 @@ const styles = {
   colorLabelGroup: tw("flex flex-col"),
   colorLabel: tw("text-xs font-medium text-muted-foreground"),
   colorValue: tw("text-xs text-muted-foreground/70"),
+  pictureThumbButton: tw(
+    "flex size-8 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-md border bg-muted p-0 text-muted-foreground hover:text-foreground",
+  ),
+  pictureThumbImg: tw("size-full object-cover"),
+  pictureActions: tw("flex items-center gap-2"),
+  pictureActionButton: tw(
+    "cursor-pointer text-xs text-muted-foreground underline hover:text-foreground",
+  ),
+  hiddenInput: tw("hidden"),
 };
 
 const createLink = (): ProfileLink => ({
@@ -56,9 +70,30 @@ export const ProfileHeaderForm = ({
   dispatch,
 }: ProfileHeaderFormProps) => {
   const [askAiOpen, setAskAiOpen] = useState(false);
+  const pictureInputRef = useRef<HTMLInputElement>(null);
 
   const updateHeader = (patch: Partial<ProfileHeader>) => {
     dispatch({ type: "UPDATE_HEADER", header: { ...header, ...patch } });
+  };
+
+  const handlePictureSelected = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.size > MAX_PICTURE_UPLOAD_BYTES) {
+      toast.error("That photo is too large (max 10MB).");
+      return;
+    }
+
+    try {
+      const resized = await readAndResizePicture(file);
+      updateHeader({ picture: resized });
+    } catch {
+      toast.error("Couldn't use that photo — try a different file.");
+    }
   };
 
   const updateLink = (id: string, patch: Partial<ProfileLink>) => {
@@ -190,6 +225,55 @@ export const ProfileHeaderForm = ({
       </div>
 
       <div className={styles.themeBlock}>
+        <div className={styles.themeField}>
+          <button
+            type="button"
+            className={styles.pictureThumbButton}
+            aria-label={header.picture ? "Change photo" : "Upload photo"}
+            onClick={() => pictureInputRef.current?.click()}
+          >
+            {header.picture ? (
+              // A 32px preview of a local data URL — next/image's
+              // optimization (CDN, srcset, lazy load) doesn't apply here.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={header.picture}
+                alt=""
+                className={styles.pictureThumbImg}
+              />
+            ) : (
+              <ImageIcon className="size-3.5" />
+            )}
+          </button>
+          <input
+            ref={pictureInputRef}
+            type="file"
+            accept="image/*"
+            className={styles.hiddenInput}
+            onChange={handlePictureSelected}
+          />
+          <div className={styles.colorLabelGroup}>
+            <span className={styles.colorLabel}>Photo (optional)</span>
+            <div className={styles.pictureActions}>
+              <button
+                type="button"
+                className={styles.pictureActionButton}
+                onClick={() => pictureInputRef.current?.click()}
+              >
+                {header.picture ? "Change" : "Upload"}
+              </button>
+              {header.picture && (
+                <button
+                  type="button"
+                  className={styles.pictureActionButton}
+                  onClick={() => updateHeader({ picture: null })}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
         <label className={styles.themeField}>
           <input
             type="color"

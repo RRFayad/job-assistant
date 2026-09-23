@@ -1,10 +1,14 @@
+import base64
 import copy
+import io
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
 from docx import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from PIL import Image
 
 from schemas.profile import (
     EntriesSection,
@@ -31,15 +35,20 @@ from services.markdown_lite import (
 # cloned directly from its Word XML and refilled, so their typography
 # (fonts, sizes, colors, spacing) always matches the source design exactly
 # rather than being hand-picked in Python and drifting from it over time.
-TEMPLATE_PATH = (
-    Path(__file__).resolve().parent.parent / "templates" / "resume_template.docx"
-)
+_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
+RESUME_TEMPLATE_PATH = _TEMPLATES_DIR / "resume_template.docx"
+# Same header content, minus the picture column — used whenever the Profile
+# has no picture, so the header content takes the full width rather than
+# leaving an empty colored gap where a photo would have been.
+HEADER_NO_PIC_TEMPLATE_PATH = _TEMPLATES_DIR / "header_without_pic.docx"
 
 _LINK_RELATIONSHIP = (
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
 )
 _BODY_LINK_COLOR = "0563C1"
 _HEADER_TEXT_COLOR = "E8E8E8"
+_PICTURE_DATA_URL_RE = re.compile(r"^data:image/[^;]+;base64,(?P<data>.+)$", re.DOTALL)
+_PICTURE_EXPORT_DPI = 300
 
 
 @dataclass(frozen=True)
@@ -65,7 +74,8 @@ class _Snippets:
     limited to however many the template's own example content happens to
     have."""
 
-    header_table: object
+    header_table_with_picture: object
+    header_table_no_picture: object
     section_heading: object
     body_paragraph: object
     job_title: object
@@ -76,8 +86,10 @@ class _Snippets:
 
 def _load_snippets(template: Document) -> _Snippets:
     paragraphs = template.paragraphs
+    no_pic_document = Document(HEADER_NO_PIC_TEMPLATE_PATH)
     return _Snippets(
-        header_table=copy.deepcopy(template.tables[0]._tbl),
+        header_table_with_picture=copy.deepcopy(template.tables[0]._tbl),
+        header_table_no_picture=copy.deepcopy(no_pic_document.tables[0]._tbl),
         section_heading=copy.deepcopy(paragraphs[1]._p),
         body_paragraph=copy.deepcopy(paragraphs[2]._p),
         job_title=copy.deepcopy(paragraphs[8]._p),
@@ -94,11 +106,16 @@ def _clear_body(document: Document) -> None:
         if child is not sect_pr:
             body.remove(child)
 
-    # The template's own example hyperlinks (e.g. "github.com/yourusername")
-    # lived in the body just removed above, so their relationship entries
-    # are now orphaned — nothing left in the document references them.
+    # The template's own example hyperlinks and placeholder headshot lived
+    # in the body just removed above, so their relationship entries are now
+    # orphaned — nothing left in the document references them. (The header
+    # table snippet was already deep-copied before this runs, and either
+    # gets its picture relationship freshly created or never had one, so
+    # dropping these here can't break it — see _build_header/_embed_picture.)
     for r_id in [
-        rid for rid, rel in document.part.rels.items() if "hyperlink" in rel.reltype
+        rid
+        for rid, rel in document.part.rels.items()
+        if "hyperlink" in rel.reltype or "image" in rel.reltype
     ]:
         document.part.drop_rel(r_id)
 
@@ -142,6 +159,78 @@ def _recolor_table_fill(table_element, hex_value: str) -> None:
     fill = hex_value.lstrip("#").upper()
     for shd in table_element.iter(qn("w:shd")):
         shd.set(qn("w:fill"), fill)
+
+
+def _text_run(paragraph_element):
+    """The first run that actually carries text — as opposed to, say, the
+    picture template's name paragraph, whose *first* run anchors the
+    headshot image and has no `w:t` of its own."""
+    for run in paragraph_element.findall(qn("w:r")):
+        if run.find(qn("w:t")) is not None:
+            return run
+    return None
+
+
+def _decode_picture_data_url(data_url: str) -> bytes:
+    match = _PICTURE_DATA_URL_RE.match(data_url)
+    if not match:
+        raise ValueError("Unsupported picture data URL")
+    return base64.b64decode(match.group("data"))
+
+
+def _crop_and_resize_picture(
+    image_bytes: bytes, target_cx: int, target_cy: int
+) -> bytes:
+    """Center-crops to the picture frame's exact aspect ratio, then resizes
+    to it at print resolution — so the frame in the generated document is
+    filled edge to edge with no stretching or distortion, regardless of the
+    uploaded photo's own dimensions."""
+    target_ratio = target_cx / target_cy
+
+    with Image.open(io.BytesIO(image_bytes)) as image:
+        image = image.convert("RGB")
+        width, height = image.size
+        current_ratio = width / height
+
+        if current_ratio > target_ratio:
+            cropped_width = round(height * target_ratio)
+            left = (width - cropped_width) // 2
+            image = image.crop((left, 0, left + cropped_width, height))
+        elif current_ratio < target_ratio:
+            cropped_height = round(width / target_ratio)
+            top = (height - cropped_height) // 2
+            image = image.crop((0, top, width, top + cropped_height))
+
+        out_width = round(target_cx / 914400 * _PICTURE_EXPORT_DPI)
+        out_height = round(target_cy / 914400 * _PICTURE_EXPORT_DPI)
+        image = image.resize((out_width, out_height), Image.LANCZOS)
+
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        return buffer.getvalue()
+
+
+def _embed_picture(document: Document, table_element, data_url: str) -> None:
+    drawing = next(table_element.iter(qn("w:drawing")))
+    extent = next(drawing.iter(qn("wp:extent")))
+    target_cx = int(extent.get("cx"))
+    target_cy = int(extent.get("cy"))
+
+    png_bytes = _crop_and_resize_picture(
+        _decode_picture_data_url(data_url), target_cx, target_cy
+    )
+    r_id, _ = document.part.get_or_add_image(io.BytesIO(png_bytes))
+
+    blip = next(drawing.iter(qn("a:blip")))
+    blip.set(qn("r:embed"), r_id)
+
+    blip_fill = blip.getparent()
+    src_rect = blip_fill.find(qn("a:srcRect"))
+    if src_rect is not None:
+        # The template's crop percentages are tuned to its own placeholder
+        # photo; the image above is already cropped to the right aspect
+        # ratio, so re-applying them here would crop it a second time.
+        blip_fill.remove(src_rect)
 
 
 def _new_run(
@@ -335,14 +424,22 @@ def _rebuild_links_paragraph(
 def _build_header(
     document: Document, snippets: _Snippets, header: ProfileHeader
 ) -> None:
-    table_el = copy.deepcopy(snippets.header_table)
+    has_picture = bool(header.picture)
+    if has_picture:
+        table_el = copy.deepcopy(snippets.header_table_with_picture)
+        _embed_picture(document, table_el, header.picture)
+    else:
+        table_el = copy.deepcopy(snippets.header_table_no_picture)
     _recolor_table_fill(table_el, header.primary_color)
 
-    cell = table_el.findall(qn("w:tr"))[0].findall(qn("w:tc"))[1]
+    # The picture layout has a picture column before the text column; the
+    # no-picture layout is a single full-width cell.
+    cells = table_el.findall(qn("w:tr"))[0].findall(qn("w:tc"))
+    cell = cells[1] if has_picture else cells[0]
     cell_paragraphs = cell.findall(qn("w:p"))
 
-    _set_run_text(cell_paragraphs[0].find(qn("w:r")), header.full_name)
-    _set_run_text(cell_paragraphs[1].find(qn("w:r")), header.career_title)
+    _set_run_text(_text_run(cell_paragraphs[0]), header.full_name)
+    _set_run_text(_text_run(cell_paragraphs[1]), header.career_title)
     _rebuild_contact_paragraph(cell_paragraphs[2], header)
     _rebuild_links_paragraph(document, cell_paragraphs[3], header.links)
 
@@ -351,7 +448,7 @@ def _build_header(
 
 
 def build_resume_document(profile: Profile) -> Document:
-    document = Document(TEMPLATE_PATH)
+    document = Document(RESUME_TEMPLATE_PATH)
     snippets = _load_snippets(document)
     _clear_body(document)
 

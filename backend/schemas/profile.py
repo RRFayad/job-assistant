@@ -23,6 +23,10 @@ class ProfileHeader(CamelModel):
     links: list[ProfileLink]
     primary_color: str
     secondary_color: str
+    # A data URL (e.g. "data:image/png;base64,..."), or None to render the
+    # no-picture header layout. No dedicated upload/storage endpoint exists
+    # yet — this flows through the Profile object like every other field.
+    picture: str | None = None
 
 
 class TextSection(CamelModel):
