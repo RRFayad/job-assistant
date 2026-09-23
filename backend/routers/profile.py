@@ -1,8 +1,9 @@
 import io
 import re
+import uuid
 from urllib.parse import quote
 
-from fastapi import APIRouter
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from starlette import status
 
@@ -18,6 +19,8 @@ from schemas.profile import (
 from services.docx_export import build_resume_document
 
 router = APIRouter(prefix="/profile", tags=["profile"])
+
+_MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10MB
 
 _UNSAFE_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
 
@@ -94,6 +97,67 @@ def save_profile(
 ) -> None:
     """Accepts and discards the payload — no persistence yet (see #4)."""
     return None
+
+
+@router.post("/extract", response_model=Profile, status_code=status.HTTP_200_OK)
+async def extract_profile(
+    user: current_user_dependency,
+    file: UploadFile = File(...),
+) -> Profile:
+    """Mocked extraction: ignores the uploaded file's actual content and
+    returns canned data for the Candidate to review — no real parsing or AI
+    yet (see #9)."""
+    content = await file.read()  # Content is intentionally unused beyond this.
+    if len(content) > _MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail="File is too large (max 10MB)",
+        )
+
+    return Profile(
+        id=str(uuid.uuid4()),
+        name="Uploaded Resume",
+        header=ProfileHeader(
+            full_name="Alex Rivera",
+            career_title="Product Manager",
+            email="alex.rivera@example.com",
+            phone="+1 555-0199",
+            location="New York, NY",
+            links=[
+                ProfileLink(
+                    id=str(uuid.uuid4()),
+                    label="LinkedIn",
+                    url="https://linkedin.com",
+                ),
+            ],
+            primary_color="#059669",
+            secondary_color="#d97706",
+        ),
+        sections=[
+            TextSection(
+                id=str(uuid.uuid4()),
+                type="text",
+                title="Summary",
+                body=(
+                    "Product Manager with **6 years** of experience leading"
+                    " cross-functional teams from discovery to launch."
+                ),
+            ),
+            EntriesSection(
+                id=str(uuid.uuid4()),
+                type="entries",
+                title="Experience",
+                entries=[
+                    Entry(
+                        id=str(uuid.uuid4()),
+                        heading="Senior Product Manager, Globex Inc",
+                        dates="2021 - Present",
+                        body="Owned the roadmap for a B2B SaaS platform.",
+                    ),
+                ],
+            ),
+        ],
+    )
 
 
 @router.post("/export")

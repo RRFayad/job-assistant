@@ -11,13 +11,24 @@ export const backendClient = axios.create({
   baseURL: backendUrl,
 });
 
-export const getAuthenticatedBackendClient = async () => {
+// Exported (not just used internally) so callers that can't go through this
+// module's axios-based helpers — e.g. a Route Handler forwarding a file
+// upload via native fetch, where axios's Node FormData support is less
+// certain — still share the same token-retrieval logic instead of
+// reimplementing it.
+export const getBackendAuthToken = async (): Promise<string> => {
   const { getToken } = await auth();
   const token = await getToken();
 
   if (!token) {
     throw new Error("Unable to retrieve Clerk session token");
   }
+
+  return token;
+};
+
+export const getAuthenticatedBackendClient = async () => {
+  const token = await getBackendAuthToken();
 
   return axios.create({
     baseURL: backendUrl,

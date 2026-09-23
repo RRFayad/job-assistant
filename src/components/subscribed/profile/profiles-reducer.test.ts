@@ -142,6 +142,56 @@ describe("profilesReducer", () => {
     });
   });
 
+  describe("IMPORT_PROFILE", () => {
+    it("appends the given Profile and selects it", () => {
+      const imported = makeProfile("imported-1", "Uploaded Resume");
+
+      const result = profilesReducer(oneProfileState, {
+        type: "IMPORT_PROFILE",
+        profile: imported,
+      });
+
+      expect(result.profiles).toEqual([oneProfileState.profiles[0], imported]);
+      expect(result.selectedId).toBe("imported-1");
+    });
+
+    it("is a no-op at the 3-Profile cap", () => {
+      const imported = makeProfile("imported-1", "Uploaded Resume");
+
+      const result = profilesReducer(threeProfileState, {
+        type: "IMPORT_PROFILE",
+        profile: imported,
+      });
+
+      expect(result).toBe(threeProfileState);
+    });
+
+    it("disambiguates the name when it collides with an existing Profile", () => {
+      const imported = makeProfile("imported-1", "Profile One");
+
+      const result = profilesReducer(oneProfileState, {
+        type: "IMPORT_PROFILE",
+        profile: imported,
+      });
+
+      expect(result.profiles[1].name).toBe("Profile One 2");
+    });
+
+    it("deep-copies the imported Profile so it doesn't share references", () => {
+      const imported = makeProfile("imported-1", "Uploaded Resume");
+
+      const result = profilesReducer(oneProfileState, {
+        type: "IMPORT_PROFILE",
+        profile: imported,
+      });
+
+      expect(result.profiles[1].header).toEqual(imported.header);
+      expect(result.profiles[1].header).not.toBe(imported.header);
+      expect(result.profiles[1].sections).toEqual(imported.sections);
+      expect(result.profiles[1].sections).not.toBe(imported.sections);
+    });
+  });
+
   describe("DELETE", () => {
     it("removes the matching Profile", () => {
       const result = profilesReducer(twoProfileState, {

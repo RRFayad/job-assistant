@@ -12,6 +12,7 @@ export type ProfilesState = {
 export type MultiProfileAction =
   | { type: "CREATE_BLANK" }
   | { type: "DUPLICATE"; profileId: string }
+  | { type: "IMPORT_PROFILE"; profile: Profile }
   | { type: "DELETE"; profileId: string }
   | { type: "SELECT"; profileId: string };
 
@@ -81,6 +82,20 @@ export const profilesReducer = (
       return {
         profiles: [...state.profiles, duplicate],
         selectedId: duplicate.id,
+      };
+    }
+
+    case "IMPORT_PROFILE": {
+      if (!canCreateProfile(state)) return state;
+
+      const existingNames = state.profiles.map((p) => p.name);
+      const imported: Profile = {
+        ...structuredClone(action.profile),
+        name: uniqueName(action.profile.name, existingNames),
+      };
+      return {
+        profiles: [...state.profiles, imported],
+        selectedId: imported.id,
       };
     }
 

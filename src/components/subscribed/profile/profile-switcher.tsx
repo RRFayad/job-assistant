@@ -27,6 +27,7 @@ type ProfileSwitcherProps = {
   onDelete: (profileId: string) => void;
   onCreateBlank: () => void;
   onDuplicate: (profileId: string) => void;
+  onImport: (profile: Profile) => void;
 };
 
 const styles = {
@@ -95,6 +96,7 @@ export const ProfileSwitcher = ({
   onDelete,
   onCreateBlank,
   onDuplicate,
+  onImport,
 }: ProfileSwitcherProps) => {
   return (
     <div className={styles.row}>
@@ -117,6 +119,7 @@ export const ProfileSwitcher = ({
         profiles={profiles}
         onCreateBlank={onCreateBlank}
         onDuplicate={onDuplicate}
+        onImport={onImport}
       />
     </div>
   );

@@ -52,6 +52,14 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
     dispatch({ type: "DUPLICATE", profileId });
   };
 
+  const handleImport = (profile: Profile) => {
+    if (!canCreateProfile(state)) {
+      toast.error(CAP_MESSAGE);
+      return;
+    }
+    dispatch({ type: "IMPORT_PROFILE", profile });
+  };
+
   const handleDelete = (profileId: string) => {
     if (!canDeleteProfile(state)) {
       toast.error("You can't delete your last remaining Profile.");
@@ -75,6 +83,7 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
         onDelete={handleDelete}
         onCreateBlank={handleCreateBlank}
         onDuplicate={handleDuplicate}
+        onImport={handleImport}
       />
       <ProfileEditor
         key={selectedProfile.id}
