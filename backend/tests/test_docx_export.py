@@ -439,3 +439,19 @@ def test_unused_placeholder_image_relationship_is_removed_without_a_picture() ->
         rel.target_ref for rel in document.part.rels.values() if "image" in rel.reltype
     ]
     assert image_targets == []
+
+
+def test_section_heading_has_a_bottom_border_matching_the_secondary_color() -> None:
+    profile = _make_profile(
+        sections=[
+            TextSection(id="s1", type="text", title="Summary", body="hi"),
+        ]
+    )
+    document = _reload(build_resume_document(profile))
+
+    heading = next(p for p in document.paragraphs if p.text == "Summary")
+    p_bdr = heading._p.pPr.find(qn("w:pBdr"))
+    bottom = p_bdr.find(qn("w:bottom"))
+
+    assert bottom.get(qn("w:val")) == "single"
+    assert bottom.get(qn("w:color")) == "7C3AED"

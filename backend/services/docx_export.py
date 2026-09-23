@@ -155,6 +155,29 @@ def _set_run_color(run_element, hex_value: str) -> None:
         del color_el.attrib[qn("w:themeColor")]
 
 
+def _set_bottom_border(paragraph_element, hex_value: str) -> None:
+    """A thin rule under a section heading, colored to match its text —
+    the divider line under "Profile & Career", "Skills", etc."""
+    pPr = paragraph_element.find(qn("w:pPr"))
+    if pPr is None:
+        pPr = OxmlElement("w:pPr")
+        paragraph_element.insert(0, pPr)
+
+    p_bdr = pPr.find(qn("w:pBdr"))
+    if p_bdr is None:
+        p_bdr = OxmlElement("w:pBdr")
+        # w:pBdr must precede w:spacing/w:jc/etc. in CT_PPrBase's schema
+        # order, so it goes first among pPr's children, not appended last.
+        pPr.insert(0, p_bdr)
+
+    bottom = OxmlElement("w:bottom")
+    bottom.set(qn("w:val"), "single")
+    bottom.set(qn("w:sz"), "6")
+    bottom.set(qn("w:space"), "1")
+    bottom.set(qn("w:color"), hex_value.lstrip("#").upper())
+    p_bdr.append(bottom)
+
+
 def _recolor_table_fill(table_element, hex_value: str) -> None:
     fill = hex_value.lstrip("#").upper()
     for shd in table_element.iter(qn("w:shd")):
@@ -459,6 +482,7 @@ def build_resume_document(profile: Profile) -> Document:
         heading_run = heading_el.find(qn("w:r"))
         _set_run_text(heading_run, section.title)
         _set_run_color(heading_run, profile.header.secondary_color)
+        _set_bottom_border(heading_el, profile.header.secondary_color)
         _append_element(document, heading_el)
 
         _render_section_body(document, snippets, section)
