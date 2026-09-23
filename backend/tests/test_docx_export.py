@@ -455,3 +455,42 @@ def test_section_heading_has_a_bottom_border_matching_the_secondary_color() -> N
 
     assert bottom.get(qn("w:val")) == "single"
     assert bottom.get(qn("w:color")) == "7C3AED"
+
+
+def test_cloned_paragraphs_do_not_carry_the_templates_leftover_div_id() -> None:
+    """The template's own paragraphs each reference a `w:divId`, which
+    links to a *separate* border definition in word/webSettings.xml (not
+    the paragraph's own w:pBdr). Left in place, this rendered as a second,
+    uncontrollable-colored line under every heading and body paragraph in
+    Word, invisible to any check that only looks at the paragraph itself.
+    """
+    profile = _make_profile(
+        sections=[
+            TextSection(id="s1", type="text", title="Summary", body="Body text."),
+            EntriesSection(
+                id="s2",
+                type="entries",
+                title="Experience",
+                entries=[
+                    Entry(
+                        id="e1",
+                        heading="Engineer, Acme",
+                        dates="2020 - 2022",
+                        body="- A bullet.",
+                    ),
+                ],
+            ),
+            TagsSection(
+                id="s3",
+                type="tags",
+                title="Skills",
+                categories=[TagCategory(id="c1", label="Languages", items=["Python"])],
+            ),
+        ]
+    )
+    document = _reload(build_resume_document(profile))
+
+    for paragraph in document.paragraphs:
+        pPr = paragraph._p.pPr
+        div_id = pPr.find(qn("w:divId")) if pPr is not None else None
+        assert div_id is None, f"stray divId on {paragraph.text!r}"

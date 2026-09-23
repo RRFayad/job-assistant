@@ -84,18 +84,36 @@ class _Snippets:
     tags_line: object
 
 
+def _cloned_paragraph_without_div_id(paragraph):
+    """Deep-copies a paragraph, stripping `w:divId` — leftover metadata from
+    this template having been authored via an HTML/web paste. Word links a
+    `divId` to a border definition in word/webSettings.xml (not the
+    paragraph's own `w:pBdr`, which is why grep-ing the paragraph alone
+    finds nothing); left in place, every cloned occurrence of these
+    paragraphs would silently grow that div's border, invisible until
+    opened in Word and impossible to recolor per Profile.
+    """
+    element = copy.deepcopy(paragraph._p)
+    pPr = element.find(qn("w:pPr"))
+    if pPr is not None:
+        div_id = pPr.find(qn("w:divId"))
+        if div_id is not None:
+            pPr.remove(div_id)
+    return element
+
+
 def _load_snippets(template: Document) -> _Snippets:
     paragraphs = template.paragraphs
     no_pic_document = Document(HEADER_NO_PIC_TEMPLATE_PATH)
     return _Snippets(
         header_table_with_picture=copy.deepcopy(template.tables[0]._tbl),
         header_table_no_picture=copy.deepcopy(no_pic_document.tables[0]._tbl),
-        section_heading=copy.deepcopy(paragraphs[1]._p),
-        body_paragraph=copy.deepcopy(paragraphs[2]._p),
-        job_title=copy.deepcopy(paragraphs[8]._p),
-        job_dates=copy.deepcopy(paragraphs[9]._p),
-        bullet_item=copy.deepcopy(paragraphs[11]._p),
-        tags_line=copy.deepcopy(paragraphs[5]._p),
+        section_heading=_cloned_paragraph_without_div_id(paragraphs[1]),
+        body_paragraph=_cloned_paragraph_without_div_id(paragraphs[2]),
+        job_title=_cloned_paragraph_without_div_id(paragraphs[8]),
+        job_dates=_cloned_paragraph_without_div_id(paragraphs[9]),
+        bullet_item=_cloned_paragraph_without_div_id(paragraphs[11]),
+        tags_line=_cloned_paragraph_without_div_id(paragraphs[5]),
     )
 
 
