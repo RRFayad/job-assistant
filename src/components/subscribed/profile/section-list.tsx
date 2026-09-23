@@ -13,6 +13,7 @@ import {
 import type { ProfileSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
+import { AskAiPanel } from "./ask-ai-panel";
 import { EntriesSectionEditor } from "./entries-section-editor";
 import { ListSectionEditor } from "./list-section-editor";
 import { PairsSectionEditor } from "./pairs-section-editor";
@@ -79,6 +80,18 @@ export const SectionList = ({
           }
           onRemove={() =>
             dispatch({ type: "REMOVE_SECTION", sectionId: section.id })
+          }
+          aiPanel={
+            <AskAiPanel
+              target={{ kind: "section", section }}
+              onAccept={(suggestion) =>
+                suggestion.kind === "section" &&
+                dispatch({
+                  type: "UPDATE_SECTION",
+                  section: suggestion.section,
+                })
+              }
+            />
           }
         >
           {section.type === "text" && (

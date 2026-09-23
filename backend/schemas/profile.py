@@ -90,3 +90,19 @@ class Profile(CamelModel):
     name: str
     header: ProfileHeader
     sections: list[ProfileSection]
+
+
+class SuggestHeaderTarget(CamelModel):
+    kind: Literal["header"]
+    header: ProfileHeader
+
+
+class SuggestSectionTarget(CamelModel):
+    kind: Literal["section"]
+    section: ProfileSection
+
+
+SuggestionTarget = Annotated[
+    Union[SuggestHeaderTarget, SuggestSectionTarget],
+    Field(discriminator="kind"),
+]

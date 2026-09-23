@@ -16,6 +16,7 @@ type SectionShellProps = {
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
+  aiPanel: ReactNode;
   children: ReactNode;
 };
 
@@ -35,6 +36,7 @@ export const SectionShell = ({
   onMoveUp,
   onMoveDown,
   onRemove,
+  aiPanel,
   children,
 }: SectionShellProps) => {
   return (
@@ -78,6 +80,7 @@ export const SectionShell = ({
           </Button>
         </div>
       </div>
+      {aiPanel}
       {children}
     </section>
   );

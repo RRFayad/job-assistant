@@ -14,9 +14,11 @@ from schemas.profile import (
     Profile,
     ProfileHeader,
     ProfileLink,
+    SuggestionTarget,
     TextSection,
 )
 from services.docx_export import build_resume_document
+from services.suggestions import suggest
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
@@ -158,6 +160,16 @@ async def extract_profile(
             ),
         ],
     )
+
+
+@router.post("/suggest", response_model=SuggestionTarget)
+def suggest_edit(
+    target: SuggestionTarget, user: current_user_dependency
+) -> SuggestionTarget:
+    """Mocked "Ask AI": a hardcoded, obviously-canned transformation — no
+    real AI yet (see #10). Never applied by this endpoint; the frontend
+    always requires an explicit Accept before it reaches the reducer."""
+    return suggest(target)
 
 
 @router.post("/export")

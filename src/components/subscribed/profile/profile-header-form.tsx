@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import type { ProfileHeader, ProfileLink } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
+import { AskAiPanel } from "./ask-ai-panel";
 import type { ProfileAction } from "./profile-reducer";
 import type { SaveStatus } from "./use-autosave-profile";
 
@@ -76,6 +77,14 @@ export const ProfileHeaderForm = ({
           {saveStatus === "saved" && "All changes saved"}
         </p>
       </div>
+
+      <AskAiPanel
+        target={{ kind: "header", header }}
+        onAccept={(suggestion) =>
+          suggestion.kind === "header" &&
+          dispatch({ type: "UPDATE_HEADER", header: suggestion.header })
+        }
+      />
 
       <div className={styles.fields}>
         <label className={styles.field}>

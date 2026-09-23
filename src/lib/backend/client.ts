@@ -80,6 +80,19 @@ export const saveBackendData = async <T>(
   return response !== null;
 };
 
+export const postBackendData = async <TBody, TResponse>(
+  endpoint: string,
+  body: TBody,
+  logMessage = `Failed to post to backend endpoint: ${endpoint}`,
+): Promise<TResponse | null> => {
+  const response = await callBackend(
+    (client) => client.post<TResponse>(endpoint, body),
+    logMessage,
+  );
+
+  return response?.data ?? null;
+};
+
 export type BackendBlob = {
   data: ArrayBuffer;
   contentType: string;

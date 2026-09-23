@@ -3,6 +3,7 @@
 import {
   fetchBackendBlob,
   fetchBackendData,
+  postBackendData,
   saveBackendData,
   type BackendBlob,
 } from "./client";
@@ -69,12 +70,25 @@ export type Profile = {
   sections: ProfileSection[];
 };
 
+export type SuggestionTarget =
+  | { kind: "header"; header: ProfileHeader }
+  | { kind: "section"; section: ProfileSection };
+
 export const fetchProfiles = async (): Promise<Profile[] | null> => {
   return fetchBackendData<Profile[]>("/profile/");
 };
 
 export const saveProfile = async (profile: Profile): Promise<boolean> => {
   return saveBackendData(`/profile/${profile.id}`, profile);
+};
+
+export const fetchProfileSuggestion = async (
+  target: SuggestionTarget,
+): Promise<SuggestionTarget | null> => {
+  return postBackendData<SuggestionTarget, SuggestionTarget>(
+    "/profile/suggest",
+    target,
+  );
 };
 
 // Called server-side only (from the /api/profile/export route handler), not
