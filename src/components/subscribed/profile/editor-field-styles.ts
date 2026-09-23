@@ -10,5 +10,5 @@ export const bareInputClass = tw(
 );
 
 export const iconButtonClass = tw(
-  "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground",
+  "flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground",
 );

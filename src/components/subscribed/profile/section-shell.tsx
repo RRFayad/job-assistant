@@ -33,7 +33,7 @@ const styles = {
   ),
   controls: tw("flex shrink-0 items-center gap-0.5 text-muted-foreground"),
   iconButton: tw(
-    "flex size-7 items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30",
+    "flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-30",
   ),
   iconButtonActive: tw("bg-muted text-foreground"),
   body: tw("mt-4"),

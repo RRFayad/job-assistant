@@ -14,7 +14,8 @@ export type MultiProfileAction =
   | { type: "DUPLICATE"; profileId: string }
   | { type: "IMPORT_PROFILE"; profile: Profile }
   | { type: "DELETE"; profileId: string }
-  | { type: "SELECT"; profileId: string };
+  | { type: "SELECT"; profileId: string }
+  | { type: "RENAME_PROFILE"; profileId: string; name: string };
 
 export type ProfilesAction = ProfileAction | MultiProfileAction;
 
@@ -114,6 +115,15 @@ export const profilesReducer = (
     case "SELECT":
       if (action.profileId === state.selectedId) return state;
       return { ...state, selectedId: action.profileId };
+
+    case "RENAME_PROFILE": {
+      const profiles = state.profiles.map((profile) =>
+        profile.id === action.profileId
+          ? { ...profile, name: action.name }
+          : profile,
+      );
+      return { ...state, profiles };
+    }
 
     default: {
       let changed = false;

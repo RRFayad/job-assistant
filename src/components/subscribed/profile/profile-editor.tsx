@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/subscribed/page-header";
 import type { Profile } from "@/lib/backend/profile";
 import { cn, tw } from "@/lib/utils";
 
+import { ExportPdfButton } from "./export-pdf-button";
 import { ExportProfileButton } from "./export-profile-button";
 import { ProfileHeaderForm } from "./profile-header-form";
 import { ProfileSwitcher } from "./profile-switcher";
@@ -20,6 +21,7 @@ type ProfileEditorProps = {
   dispatch: Dispatch<ProfilesAction>;
   onSelect: (profileId: string) => void;
   onDelete: (profileId: string) => void;
+  onRename: (profileId: string, name: string) => void;
   onRequestNew: () => void;
 };
 
@@ -42,6 +44,7 @@ export const ProfileEditor = ({
   dispatch,
   onSelect,
   onDelete,
+  onRename,
   onRequestNew,
 }: ProfileEditorProps) => {
   const saveStatus = useAutosaveProfile(profile);
@@ -70,6 +73,7 @@ export const ProfileEditor = ({
               )}
             </span>
             <ExportProfileButton profile={profile} />
+            <ExportPdfButton />
           </div>
         }
       />
@@ -78,6 +82,7 @@ export const ProfileEditor = ({
         selectedId={profile.id}
         onSelect={onSelect}
         onDelete={onDelete}
+        onRename={onRename}
         onRequestNew={onRequestNew}
       />
       <ProfileHeaderForm header={profile.header} dispatch={dispatch} />

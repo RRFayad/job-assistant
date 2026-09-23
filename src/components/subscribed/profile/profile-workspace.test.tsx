@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { toast } from "sonner";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Profile } from "@/lib/backend/profile";
@@ -8,6 +9,10 @@ import { ProfileWorkspace } from "./profile-workspace";
 vi.mock("@/lib/backend/profile", () => ({
   saveProfile: vi.fn().mockResolvedValue(true),
   fetchProfileSuggestion: vi.fn(),
+}));
+
+vi.mock("sonner", () => ({
+  toast: Object.assign(vi.fn(), { error: vi.fn() }),
 }));
 
 const makeProfile = (id: string, name: string): Profile => ({
@@ -60,5 +65,38 @@ describe("ProfileWorkspace", () => {
       screen.getByRole("button", { name: "Back to your Profiles" }),
     );
     expect(screen.getByRole("heading", { name: "Your Profile" })).toBeDefined();
+  });
+
+  it("shows the 3-Profile cap toast on the 'New Profile' click itself, not after choosing an option", () => {
+    const profiles = [
+      makeProfile("1", "Profile One"),
+      makeProfile("2", "Profile Two"),
+      makeProfile("3", "Profile Three"),
+    ];
+    render(<ProfileWorkspace profiles={profiles} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New Profile" }));
+
+    expect(toast.error).toHaveBeenCalledWith(
+      "You can only have up to 3 Profiles — delete one first.",
+    );
+    // Never navigated to the entry screen at all.
+    expect(
+      screen.queryByRole("heading", { name: "Create a new Profile" }),
+    ).toBeNull();
+    expect(screen.getByRole("heading", { name: "Your Profile" })).toBeDefined();
+  });
+
+  it("lets the user rename a Profile from its chip", () => {
+    render(<ProfileWorkspace profiles={[makeProfile("1", "Profile One")]} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Rename Profile One" }));
+    const input = screen.getByRole("textbox", { name: "Profile name" });
+    fireEvent.change(input, { target: { value: "Renamed Profile" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(
+      screen.getByRole("button", { name: "Renamed Profile" }),
+    ).toBeDefined();
   });
 });

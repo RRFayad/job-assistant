@@ -24,7 +24,7 @@ const styles = {
   iconButton: iconButtonClass,
   tagRow: tw("flex flex-wrap items-center gap-2"),
   tag: tw("flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"),
-  tagRemove: tw("text-muted-foreground hover:text-foreground"),
+  tagRemove: tw("cursor-pointer text-muted-foreground hover:text-foreground"),
   tagInput: tw("h-7 w-32 text-xs"),
   addCategoryButton: tw("mt-3"),
 };

@@ -255,6 +255,19 @@ describe("profilesReducer", () => {
     });
   });
 
+  describe("RENAME_PROFILE", () => {
+    it("renames the matching Profile without touching others", () => {
+      const result = profilesReducer(twoProfileState, {
+        type: "RENAME_PROFILE",
+        profileId: "1",
+        name: "New Name",
+      });
+
+      expect(result.profiles[0].name).toBe("New Name");
+      expect(result.profiles[1]).toBe(twoProfileState.profiles[1]);
+    });
+  });
+
   describe("delegating Profile-editing actions to the selected Profile", () => {
     it("UPDATE_HEADER only changes the selected Profile", () => {
       const result = profilesReducer(twoProfileState, {

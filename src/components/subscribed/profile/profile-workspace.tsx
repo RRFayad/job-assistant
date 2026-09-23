@@ -73,6 +73,14 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
     dispatch({ type: "DELETE", profileId });
   };
 
+  const handleRequestNew = () => {
+    if (!canCreateProfile(state)) {
+      toast.error(CAP_MESSAGE);
+      return;
+    }
+    setViewMode("creating");
+  };
+
   if (viewMode === "creating") {
     return (
       <ProfileEntryScreen
@@ -101,7 +109,10 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
       dispatch={dispatch}
       onSelect={(profileId) => dispatch({ type: "SELECT", profileId })}
       onDelete={handleDelete}
-      onRequestNew={() => setViewMode("creating")}
+      onRename={(profileId, name) =>
+        dispatch({ type: "RENAME_PROFILE", profileId, name })
+      }
+      onRequestNew={handleRequestNew}
     />
   );
 };

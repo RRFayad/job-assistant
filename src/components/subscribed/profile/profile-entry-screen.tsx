@@ -34,11 +34,11 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
 const styles = {
   page: tw("mx-auto w-full max-w-4xl space-y-6"),
   backLink: tw(
-    "flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground",
+    "flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground",
   ),
   grid: tw("grid gap-4 sm:grid-cols-2"),
   option: tw(
-    "flex flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left shadow-sm transition-colors hover:border-primary/60 hover:bg-muted/40",
+    "flex cursor-pointer flex-col items-start gap-3 rounded-xl border bg-card p-5 text-left shadow-sm transition-colors hover:border-primary/60 hover:bg-muted/40",
   ),
   optionIcon: tw(
     "flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary",
