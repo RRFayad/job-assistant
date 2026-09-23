@@ -52,30 +52,47 @@ def _paragraph_texts(document: Document) -> list[str]:
     return [p.text for p in document.paragraphs]
 
 
+def _header_cell(document: Document):
+    """The header banner (name/title/contact/links) lives in a table cell
+    cloned from the template, not in the document's top-level paragraphs."""
+    return document.tables[0].rows[0].cells[1]
+
+
 def test_includes_header_fields() -> None:
     profile = _make_profile()
     document = _reload(build_resume_document(profile))
 
-    texts = _paragraph_texts(document)
-    assert "Jane Doe" in texts
-    assert "AI Engineer" in texts
-    assert any("jane@example.com" in t for t in texts)
+    header_texts = [p.text for p in _header_cell(document).paragraphs]
+    assert "Jane Doe" in header_texts
+    assert "AI Engineer" in header_texts
+    assert any("jane@example.com" in t for t in header_texts)
 
 
-def test_header_name_uses_the_primary_color() -> None:
+def test_header_name_is_white_against_the_colored_banner() -> None:
     profile = _make_profile()
     document = build_resume_document(profile)
 
-    name_paragraph = document.paragraphs[0]
-    assert name_paragraph.runs[0].font.color.rgb is not None
-    assert str(name_paragraph.runs[0].font.color.rgb) == "2563EB"
+    name_paragraph = _header_cell(document).paragraphs[0]
+    assert str(name_paragraph.runs[0].font.color.rgb) == "FFFFFF"
+
+
+def test_header_banner_is_filled_with_the_primary_color() -> None:
+    profile = _make_profile()
+    document = build_resume_document(profile)
+
+    table = document.tables[0]
+    for cell in table.rows[0].cells:
+        shd = cell._tc.tcPr.find(qn("w:shd"))
+        assert shd.get(qn("w:fill")) == "2563EB"
 
 
 def test_header_link_is_a_real_hyperlink() -> None:
     profile = _make_profile()
     document = _reload(build_resume_document(profile))
 
-    links_paragraph = next(p for p in document.paragraphs if "GitHub" in p.text)
+    links_paragraph = next(
+        p for p in _header_cell(document).paragraphs if "GitHub" in p.text
+    )
     hyperlinks = links_paragraph._p.findall(qn("w:hyperlink"))
     assert len(hyperlinks) == 1
 
@@ -95,9 +112,44 @@ def test_header_link_with_an_unsafe_scheme_is_not_a_hyperlink() -> None:
     )
     document = _reload(build_resume_document(profile))
 
-    links_paragraph = next(p for p in document.paragraphs if "Evil" in p.text)
+    links_paragraph = next(
+        p for p in _header_cell(document).paragraphs if "Evil" in p.text
+    )
     hyperlinks = links_paragraph._p.findall(qn("w:hyperlink"))
     assert len(hyperlinks) == 0
+
+
+def test_header_with_no_links_renders_an_empty_links_paragraph() -> None:
+    profile = _make_profile(
+        header=ProfileHeader(
+            full_name="Jane Doe",
+            career_title="AI Engineer",
+            email="jane@example.com",
+            phone="555-0100",
+            location="Remote",
+            links=[],
+            primary_color="#2563eb",
+            secondary_color="#7c3aed",
+        )
+    )
+    document = _reload(build_resume_document(profile))
+
+    links_paragraph = _header_cell(document).paragraphs[3]
+    assert links_paragraph.text == ""
+
+
+def test_unused_template_hyperlink_relationships_are_removed() -> None:
+    profile = _make_profile()
+    document = _reload(build_resume_document(profile))
+
+    targets = {
+        rel.target_ref
+        for rel in document.part.rels.values()
+        if "hyperlink" in rel.reltype
+    }
+    # Only the Profile's own link should remain — not the template's
+    # placeholder example links (e.g. github.com/yourusername).
+    assert targets == {"https://github.com"}
 
 
 def test_text_section_renders_bold_run_from_markdown_lite() -> None:
@@ -131,7 +183,7 @@ def test_text_section_link_becomes_a_real_hyperlink() -> None:
     assert len(hyperlinks) == 1
 
 
-def test_entries_section_renders_heading_dates_and_body() -> None:
+def test_entries_section_renders_heading_dates_on_separate_lines_and_body() -> None:
     profile = _make_profile(
         sections=[
             EntriesSection(
@@ -152,8 +204,61 @@ def test_entries_section_renders_heading_dates_and_body() -> None:
     document = _reload(build_resume_document(profile))
     texts = _paragraph_texts(document)
 
-    assert any("Engineer, Acme" in t and "2020 - 2022" in t for t in texts)
+    # Matches the template's own design: the dates sit on their own line,
+    # not crammed inline after the job title.
+    assert "Engineer, Acme" in texts
+    assert "2020 - 2022" in texts
+    assert texts.index("2020 - 2022") == texts.index("Engineer, Acme") + 1
     assert any(t == "Did the work." for t in texts)
+
+
+def test_entries_section_job_title_and_dates_use_template_typography() -> None:
+    profile = _make_profile(
+        sections=[
+            EntriesSection(
+                id="s1",
+                type="entries",
+                title="Experience",
+                entries=[
+                    Entry(
+                        id="e1",
+                        heading="Engineer, Acme",
+                        dates="2020 - 2022",
+                        body="",
+                    ),
+                ],
+            ),
+        ]
+    )
+    document = build_resume_document(profile)
+
+    title_paragraph = next(p for p in document.paragraphs if p.text == "Engineer, Acme")
+    dates_paragraph = next(p for p in document.paragraphs if p.text == "2020 - 2022")
+
+    assert title_paragraph.runs[0].bold is True
+    assert str(dates_paragraph.runs[0].font.color.rgb) == "555555"
+
+
+def test_entries_section_omits_dates_line_when_dates_is_empty() -> None:
+    profile = _make_profile(
+        sections=[
+            EntriesSection(
+                id="s1",
+                type="entries",
+                title="Education",
+                entries=[
+                    Entry(id="e1", heading="Degree, University", dates="", body=""),
+                ],
+            ),
+        ]
+    )
+    document = _reload(build_resume_document(profile))
+    texts = _paragraph_texts(document)
+
+    index = texts.index("Degree, University")
+    # No stray empty dates/body paragraph — either nothing follows the job
+    # title at all, or whatever comes next is real content, not "".
+    assert index == len(texts) - 1 or texts[index + 1] != ""
 
 
 def test_list_section_renders_each_item_as_its_own_paragraph() -> None:
@@ -169,7 +274,7 @@ def test_list_section_renders_each_item_as_its_own_paragraph() -> None:
     assert "B" in texts
 
 
-def test_tags_section_renders_category_and_joined_tags() -> None:
+def test_tags_section_renders_bold_label_and_plain_joined_tags() -> None:
     profile = _make_profile(
         sections=[
             TagsSection(
@@ -183,9 +288,12 @@ def test_tags_section_renders_category_and_joined_tags() -> None:
         ]
     )
     document = _reload(build_resume_document(profile))
-    texts = _paragraph_texts(document)
 
-    assert any("Languages" in t and "Python, TS" in t for t in texts)
+    tags_paragraph = next(p for p in document.paragraphs if "Languages" in p.text)
+    assert tags_paragraph.text == "Languages: Python, TS"
+    assert tags_paragraph.runs[0].text == "Languages:"
+    assert tags_paragraph.runs[0].bold is True
+    assert tags_paragraph.runs[1].bold is not True
 
 
 def test_pairs_section_renders_label_colon_value() -> None:
@@ -215,3 +323,12 @@ def test_section_title_uses_the_secondary_color() -> None:
 
     heading_paragraph = next(p for p in document.paragraphs if p.text == "Summary")
     assert str(heading_paragraph.runs[0].font.color.rgb) == "7C3AED"
+
+
+def test_page_margins_and_size_match_the_template() -> None:
+    profile = _make_profile()
+    document = build_resume_document(profile)
+
+    section = document.sections[0]
+    assert section.left_margin == section.right_margin == 457200
+    assert section.top_margin == section.bottom_margin == 457200
