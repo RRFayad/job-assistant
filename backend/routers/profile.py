@@ -1,6 +1,8 @@
 import io
+import json
 import re
 import uuid
+from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
@@ -46,46 +48,21 @@ def _content_disposition(filename: str) -> str:
     )
 
 
-SEED_PROFILES: list[Profile] = [
-    Profile(
-        id="1",
-        name="AI Engineer",
-        header=ProfileHeader(
-            full_name="Jane Doe",
-            career_title="AI Engineer",
-            email="jane.doe@example.com",
-            phone="+1 555-0100",
-            location="Remote",
-            links=[
-                ProfileLink(id="1", label="LinkedIn", url="https://linkedin.com"),
-                ProfileLink(id="2", label="GitHub", url="https://github.com"),
-            ],
-            primary_color="#2563eb",
-            secondary_color="#7c3aed",
-        ),
-        sections=[
-            TextSection(
-                id="1",
-                type="text",
-                title="Summary",
-                body="AI Engineer with a background in building production ML systems.",
-            ),
-            EntriesSection(
-                id="2",
-                type="entries",
-                title="Experience",
-                entries=[
-                    Entry(
-                        id="1",
-                        heading="Senior AI Engineer, Acme Corp",
-                        dates="2023 - Present",
-                        body="Built and shipped applied ML features.",
-                    ),
-                ],
-            ),
-        ],
-    ),
-]
+# Optional, gitignored, developer-local seed data — e.g. a real resume for
+# visually comparing the real implementation against a prototype. Falls back
+# to an empty list (no fake placeholder data ships in the repo) when absent,
+# which also exercises the zero-Profile onboarding flow on a fresh clone.
+_DEV_SEED_PATH = Path(__file__).resolve().parent.parent / "dev_seed_profiles.json"
+
+
+def _load_seed_profiles() -> list[Profile]:
+    if not _DEV_SEED_PATH.exists():
+        return []
+    raw = json.loads(_DEV_SEED_PATH.read_text())
+    return [Profile.model_validate(item) for item in raw]
+
+
+SEED_PROFILES: list[Profile] = _load_seed_profiles()
 
 
 @router.get("/", response_model=list[Profile], status_code=status.HTTP_200_OK)
