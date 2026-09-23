@@ -47,7 +47,7 @@ def test_export_returns_a_valid_docx_with_the_profile_content() -> None:
 
     assert response.status_code == 200
     assert "wordprocessingml" in response.headers["content-type"]
-    assert "Jane_Doe.docx" in response.headers["content-disposition"]
+    assert "Jane-Doe_Test-Profile_CV.docx" in response.headers["content-disposition"]
 
     document = Document(io.BytesIO(response.content))
     header_texts = [p.text for p in document.tables[0].rows[0].cells[-1].paragraphs]

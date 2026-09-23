@@ -83,6 +83,22 @@ def test_includes_header_fields() -> None:
     assert any("jane@example.com" in t for t in header_texts)
 
 
+def test_contact_line_breaks_before_location_instead_of_joining_with_a_pipe() -> None:
+    profile = _make_profile()
+    document = build_resume_document(profile)
+
+    contact_paragraph = _header_cell(document).paragraphs[2]
+    runs = contact_paragraph._p.findall(qn("w:r"))
+
+    has_break = any(run.find(qn("w:br")) is not None for run in runs)
+    assert has_break
+
+    run_texts = [
+        run.find(qn("w:t")).text for run in runs if run.find(qn("w:t")) is not None
+    ]
+    assert run_texts == ["jane@example.com | 555-0100", "Remote"]
+
+
 def test_header_name_is_white_against_the_colored_banner() -> None:
     profile = _make_profile()
     document = build_resume_document(profile)

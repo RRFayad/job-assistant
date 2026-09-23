@@ -190,8 +190,10 @@ def _set_bottom_border(paragraph_element, hex_value: str) -> None:
 
     bottom = OxmlElement("w:bottom")
     bottom.set(qn("w:val"), "single")
-    bottom.set(qn("w:sz"), "6")
-    bottom.set(qn("w:space"), "1")
+    # Matches the thickness/spacing of the template's own (now-removed,
+    # fixed-color) divId-linked border — see _cloned_paragraph_without_div_id.
+    bottom.set(qn("w:sz"), "8")
+    bottom.set(qn("w:space"), "3")
     bottom.set(qn("w:color"), hex_value.lstrip("#").upper())
     p_bdr.append(bottom)
 
@@ -274,15 +276,13 @@ def _embed_picture(document: Document, table_element, data_url: str) -> None:
         blip_fill.remove(src_rect)
 
 
-def _new_run(
-    text: str,
+def _run_properties(
     style: _TextStyle,
     *,
     bold: bool = False,
     italic: bool = False,
     underline: bool = False,
 ) -> object:
-    run = OxmlElement("w:r")
     rPr = OxmlElement("w:rPr")
 
     if style.font:
@@ -304,12 +304,31 @@ def _new_run(
     color_el.set(qn("w:val"), style.color)
     rPr.append(color_el)
 
-    run.append(rPr)
+    return rPr
+
+
+def _new_run(
+    text: str,
+    style: _TextStyle,
+    *,
+    bold: bool = False,
+    italic: bool = False,
+    underline: bool = False,
+) -> object:
+    run = OxmlElement("w:r")
+    run.append(_run_properties(style, bold=bold, italic=italic, underline=underline))
 
     t = OxmlElement("w:t")
     t.set(qn("xml:space"), "preserve")
     t.text = text
     run.append(t)
+    return run
+
+
+def _new_line_break(style: _TextStyle) -> object:
+    run = OxmlElement("w:r")
+    run.append(_run_properties(style))
+    run.append(OxmlElement("w:br"))
     return run
 
 
@@ -443,11 +462,19 @@ def _render_section_body(
 
 
 def _rebuild_contact_paragraph(paragraph_element, header: ProfileHeader) -> None:
+    """Matches the template's own contact line: email/phone on one line,
+    then a real line break, then location on its own line below — not all
+    three run together on one line separated by "|"."""
     _clear_runs(paragraph_element)
-    parts = [part for part in (header.email, header.phone, header.location) if part]
-    text = " | ".join(parts)
-    if text:
-        paragraph_element.append(_new_run(text, _HEADER_TEXT_STYLE))
+    top_line = " | ".join(part for part in (header.email, header.phone) if part)
+    location = header.location.strip()
+
+    if top_line:
+        paragraph_element.append(_new_run(top_line, _HEADER_TEXT_STYLE))
+    if top_line and location:
+        paragraph_element.append(_new_line_break(_HEADER_TEXT_STYLE))
+    if location:
+        paragraph_element.append(_new_run(location, _HEADER_TEXT_STYLE))
 
 
 def _rebuild_links_paragraph(

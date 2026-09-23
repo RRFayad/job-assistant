@@ -20,16 +20,21 @@ def _profile(full_name: str, name: str = "My Profile") -> Profile:
     )
 
 
-def test_uses_full_name_when_present() -> None:
-    assert _build_export_filename(_profile("Jane Doe")) == "Jane_Doe.docx"
+def test_combines_full_name_and_profile_name_hyphen_joined() -> None:
+    # Recruiter-friendly and legible in a downloads folder or inbox, e.g.
+    # "Jane-Doe_Full-Stack-Engineer_CV.docx" rather than a bare name.
+    assert (
+        _build_export_filename(_profile("Jane Doe", name="Full Stack Engineer"))
+        == "Jane-Doe_Full-Stack-Engineer_CV.docx"
+    )
 
 
 def test_falls_back_to_profile_name_when_full_name_is_blank() -> None:
-    assert _build_export_filename(_profile("")) == "My_Profile.docx"
+    assert _build_export_filename(_profile("")) == "My-Profile_CV.docx"
 
 
 def test_falls_back_to_profile_name_when_full_name_is_whitespace_only() -> None:
-    assert _build_export_filename(_profile("   ")) == "My_Profile.docx"
+    assert _build_export_filename(_profile("   ")) == "My-Profile_CV.docx"
 
 
 def test_falls_back_to_resume_when_everything_is_blank() -> None:
@@ -37,7 +42,10 @@ def test_falls_back_to_resume_when_everything_is_blank() -> None:
 
 
 def test_strips_filesystem_unsafe_characters() -> None:
-    assert _build_export_filename(_profile('John/Doe:"Test"')) == "JohnDoeTest.docx"
+    assert (
+        _build_export_filename(_profile('John/Doe:"Test"'))
+        == "JohnDoeTest_My-Profile_CV.docx"
+    )
 
 
 def test_content_disposition_ascii_fallback_does_not_crash_on_non_latin1_names() -> (

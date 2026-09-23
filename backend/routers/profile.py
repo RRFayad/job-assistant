@@ -30,9 +30,16 @@ _UNSAFE_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
 
 
 def _build_export_filename(profile: Profile) -> str:
-    base = profile.header.full_name.strip() or profile.name.strip() or "resume"
+    # A recruiter-friendly name, e.g. "Jane-Doe_Frontend-Engineer_CV.docx" —
+    # legible at a glance in a downloads folder or an inbox attachment list,
+    # rather than a bare name or a generic "resume.docx".
+    name_part = "-".join(profile.header.full_name.split())
+    profile_part = "-".join(profile.name.split())
+
+    parts = [part for part in (name_part, profile_part) if part]
+    base = "_".join([*parts, "CV"]) if parts else "resume"
+
     base = _UNSAFE_FILENAME_CHARS.sub("", base)
-    base = "_".join(base.split()) or "resume"
     return f"{base}.docx"
 
 
