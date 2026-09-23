@@ -1,6 +1,6 @@
 import { fetchProfiles } from "@/lib/backend/profile";
 import { PageHeader } from "@/components/subscribed/page-header";
-import { ProfileEditor } from "@/components/subscribed/profile/profile-editor";
+import { ProfileWorkspace } from "@/components/subscribed/profile/profile-workspace";
 import { tw } from "@/lib/utils";
 
 const styles = {
@@ -32,16 +32,13 @@ const ProfilePage = async () => {
     );
   }
 
-  // Editing a single Profile for now — switching between multiple lands in #6.
-  const profile = profiles[0];
-
   return (
     <main className={styles.page}>
       <PageHeader
         title="Profile"
         description="Build and maintain the Profiles your tailored resumes are grounded in."
       />
-      <ProfileEditor profile={profile} />
+      <ProfileWorkspace profiles={profiles} />
     </main>
   );
 };

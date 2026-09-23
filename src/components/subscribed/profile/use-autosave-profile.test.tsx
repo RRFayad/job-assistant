@@ -84,6 +84,35 @@ describe("useAutosaveProfile", () => {
     expect(result.current).toBe("saved");
   });
 
+  it("flushes a still-debouncing edit immediately on unmount instead of dropping it", async () => {
+    vi.mocked(saveProfile).mockResolvedValue(true);
+    const { rerender, unmount } = renderHook(
+      ({ profile }) => useAutosaveProfile(profile),
+      { initialProps: { profile } },
+    );
+
+    const updated = {
+      ...profile,
+      header: { ...profile.header, fullName: "Updated" },
+    };
+    rerender({ profile: updated });
+
+    // Unmount (e.g. switching Profiles) before the 2s debounce elapses.
+    await vi.advanceTimersByTimeAsync(500);
+    unmount();
+
+    expect(saveProfile).toHaveBeenCalledWith(updated);
+  });
+
+  it("does not flush on unmount when there was no pending edit", async () => {
+    vi.mocked(saveProfile).mockResolvedValue(true);
+    const { unmount } = renderHook(() => useAutosaveProfile(profile));
+
+    unmount();
+
+    expect(saveProfile).not.toHaveBeenCalled();
+  });
+
   it("does not save again before the debounce elapses", async () => {
     vi.mocked(saveProfile).mockResolvedValue(true);
     const { rerender } = renderHook(

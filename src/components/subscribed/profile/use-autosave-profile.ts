@@ -17,6 +17,23 @@ export const useAutosaveProfile = (profile: Profile): SaveStatus => {
   const previousProfile = useRef(profile);
   const isMounted = useRef(true);
   const latestRequestId = useRef(0);
+  // An edit still waiting out its debounce window. Cleared once the timeout
+  // fires, or once a flush (see below) sends it early.
+  const pendingProfile = useRef<Profile | null>(null);
+
+  const runSave = (profileToSave: Profile) => {
+    const requestId = ++latestRequestId.current;
+    setStatus("saving");
+    saveProfile(profileToSave).then((ok) => {
+      if (!isMounted.current || requestId !== latestRequestId.current) {
+        return;
+      }
+      setStatus(ok ? "saved" : "error");
+      if (!ok) {
+        toast.error("Failed to save your Profile.");
+      }
+    });
+  };
 
   useEffect(() => {
     isMounted.current = true;
@@ -30,23 +47,28 @@ export const useAutosaveProfile = (profile: Profile): SaveStatus => {
       return;
     }
     previousProfile.current = profile;
+    pendingProfile.current = profile;
 
     const timeout = setTimeout(() => {
-      const requestId = ++latestRequestId.current;
-      setStatus("saving");
-      saveProfile(profile).then((ok) => {
-        if (!isMounted.current || requestId !== latestRequestId.current) {
-          return;
-        }
-        setStatus(ok ? "saved" : "error");
-        if (!ok) {
-          toast.error("Failed to save your Profile.");
-        }
-      });
+      pendingProfile.current = null;
+      runSave(profile);
     }, SAVE_DELAY_MS);
 
     return () => clearTimeout(timeout);
   }, [profile]);
+
+  // Empty deps: this cleanup only ever runs on true unmount, never on a
+  // dependency-triggered re-run of the effect above. Switching Profiles
+  // remounts (and thus unmounts) this hook via key={profile.id} — without
+  // this, an edit still inside its debounce window at that moment would be
+  // silently dropped instead of saved.
+  useEffect(() => {
+    return () => {
+      if (pendingProfile.current) {
+        runSave(pendingProfile.current);
+      }
+    };
+  }, []);
 
   return status;
 };
