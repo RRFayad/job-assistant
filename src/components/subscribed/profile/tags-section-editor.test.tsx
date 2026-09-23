@@ -33,7 +33,7 @@ describe("TagsSectionEditor", () => {
     const onChange = vi.fn();
     render(<TagsSectionEditor section={section} onChange={onChange} />);
 
-    const labels = screen.getAllByLabelText("Category name");
+    const labels = screen.getAllByPlaceholderText("Category name");
     fireEvent.change(labels[0], { target: { value: "Core Languages" } });
 
     expect(onChange).toHaveBeenCalledWith({
@@ -45,31 +45,55 @@ describe("TagsSectionEditor", () => {
     });
   });
 
-  it("adds a tag to the correct category", () => {
+  it("adds a tag to the correct category on Enter", () => {
     const onChange = vi.fn();
     render(<TagsSectionEditor section={section} onChange={onChange} />);
 
-    const addTagButtons = screen.getAllByRole("button", { name: "Add tag" });
-    fireEvent.click(addTagButtons[1]); // Frameworks category
+    const draftInputs = screen.getAllByPlaceholderText("+ Add");
+    fireEvent.change(draftInputs[1], { target: { value: "Vue" } }); // Frameworks
+    fireEvent.keyDown(draftInputs[1], { key: "Enter" });
 
     expect(onChange).toHaveBeenCalledWith({
       ...section,
       categories: [
         section.categories[0],
-        { ...section.categories[1], items: ["React", ""] },
+        { ...section.categories[1], items: ["React", "Vue"] },
       ],
     });
+  });
+
+  it("adds a tag on blur", () => {
+    const onChange = vi.fn();
+    render(<TagsSectionEditor section={section} onChange={onChange} />);
+
+    const draftInputs = screen.getAllByPlaceholderText("+ Add");
+    fireEvent.change(draftInputs[0], { target: { value: "Rust" } });
+    fireEvent.blur(draftInputs[0]);
+
+    expect(onChange).toHaveBeenCalledWith({
+      ...section,
+      categories: [
+        { ...section.categories[0], items: ["TypeScript", "Python", "Rust"] },
+        section.categories[1],
+      ],
+    });
+  });
+
+  it("does not add an empty tag", () => {
+    const onChange = vi.fn();
+    render(<TagsSectionEditor section={section} onChange={onChange} />);
+
+    const draftInputs = screen.getAllByPlaceholderText("+ Add");
+    fireEvent.keyDown(draftInputs[0], { key: "Enter" });
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("removes a tag from the correct category, preserving order", () => {
     const onChange = vi.fn();
     render(<TagsSectionEditor section={section} onChange={onChange} />);
 
-    const removeTagButtons = screen.getAllByRole("button", {
-      name: "Remove tag",
-    });
-    // First category's tags are TypeScript (0), Python (1).
-    fireEvent.click(removeTagButtons[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Remove TypeScript" }));
 
     expect(onChange).toHaveBeenCalledWith({
       ...section,

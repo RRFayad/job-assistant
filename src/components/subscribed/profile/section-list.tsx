@@ -1,15 +1,9 @@
 "use client";
 
 import type { Dispatch } from "react";
-import { PlusIcon } from "lucide-react";
+import { ListIcon, Rows3Icon, TagsIcon, TypeIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type { ProfileSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
@@ -30,22 +24,28 @@ type SectionListProps = {
 
 const styles = {
   list: tw("space-y-4"),
+  addSectionBar: tw(
+    "flex flex-wrap items-center gap-2 rounded-xl border border-dashed p-4",
+  ),
+  addSectionHint: tw("mr-1 text-sm text-muted-foreground"),
 };
 
-// A Record (not a plain array) so adding a 6th ProfileSection variant fails
-// to compile here until the "Add section" menu is updated for it too.
-const SECTION_TYPE_LABELS: Record<ProfileSection["type"], string> = {
-  text: "Text",
-  tags: "Tags",
-  entries: "Entries",
-  list: "List",
-  pairs: "Pairs",
-};
-
-const SECTION_TYPE_ENTRIES = Object.entries(SECTION_TYPE_LABELS) as [
-  ProfileSection["type"],
-  string,
-][];
+// A plain array (matching the prototype's own sectionTypes list) rather than
+// a Record keyed by ProfileSection["type"] — that would force compile-time
+// exhaustiveness, but it's traded away here for exact structural parity with
+// the prototype. A 6th ProfileSection variant will NOT fail to compile if
+// this array isn't updated for it too.
+const SECTION_TYPES: {
+  type: ProfileSection["type"];
+  label: string;
+  icon: typeof TypeIcon;
+}[] = [
+  { type: "text", label: "Text", icon: TypeIcon },
+  { type: "tags", label: "Tag groups", icon: TagsIcon },
+  { type: "entries", label: "Entries", icon: Rows3Icon },
+  { type: "list", label: "List", icon: ListIcon },
+  { type: "pairs", label: "Pairs", icon: Rows3Icon },
+];
 
 export const SectionList = ({
   sections,
@@ -81,9 +81,10 @@ export const SectionList = ({
           onRemove={() =>
             dispatch({ type: "REMOVE_SECTION", sectionId: section.id })
           }
-          aiPanel={
+          renderAiPanel={({ onClose }) => (
             <AskAiPanel
               target={{ kind: "section", section }}
+              onClose={onClose}
               onAccept={(suggestion) =>
                 suggestion.kind === "section" &&
                 dispatch({
@@ -92,7 +93,7 @@ export const SectionList = ({
                 })
               }
             />
-          }
+          )}
         >
           {section.type === "text" && (
             <RichTextField
@@ -140,28 +141,21 @@ export const SectionList = ({
         </SectionShell>
       ))}
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button type="button" variant="outline">
-              <PlusIcon />
-              Add section
-            </Button>
-          }
-        />
-        <DropdownMenuContent>
-          {SECTION_TYPE_ENTRIES.map(([type, label]) => (
-            <DropdownMenuItem
-              key={type}
-              onClick={() =>
-                dispatch({ type: "ADD_SECTION", sectionType: type })
-              }
-            >
-              {label}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className={styles.addSectionBar}>
+        <span className={styles.addSectionHint}>Add a section:</span>
+        {SECTION_TYPES.map(({ type, label, icon: Icon }) => (
+          <Button
+            key={type}
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => dispatch({ type: "ADD_SECTION", sectionType: type })}
+          >
+            <Icon />
+            {label}
+          </Button>
+        ))}
+      </div>
     </div>
   );
 };

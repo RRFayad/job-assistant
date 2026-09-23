@@ -151,8 +151,21 @@ describe("profilesReducer", () => {
         profile: imported,
       });
 
-      expect(result.profiles).toEqual([oneProfileState.profiles[0], imported]);
-      expect(result.selectedId).toBe("imported-1");
+      expect(result.profiles).toHaveLength(2);
+      expect(result.profiles[0]).toEqual(oneProfileState.profiles[0]);
+      expect(result.profiles[1].name).toBe("Uploaded Resume");
+      expect(result.selectedId).toBe(result.profiles[1].id);
+    });
+
+    it("assigns a fresh id rather than reusing the imported Profile's own id", () => {
+      const imported = makeProfile("imported-1", "Uploaded Resume");
+
+      const result = profilesReducer(oneProfileState, {
+        type: "IMPORT_PROFILE",
+        profile: imported,
+      });
+
+      expect(result.profiles[1].id).not.toBe("imported-1");
     });
 
     it("is a no-op at the 3-Profile cap", () => {

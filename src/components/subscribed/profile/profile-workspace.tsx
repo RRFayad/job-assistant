@@ -1,13 +1,12 @@
 "use client";
 
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { toast } from "sonner";
 
 import type { Profile } from "@/lib/backend/profile";
-import { tw } from "@/lib/utils";
 
 import { ProfileEditor } from "./profile-editor";
-import { ProfileSwitcher } from "./profile-switcher";
+import { ProfileEntryScreen } from "./profile-entry-screen";
 import {
   canCreateProfile,
   canDeleteProfile,
@@ -20,9 +19,7 @@ type ProfileWorkspaceProps = {
   profiles: Profile[];
 };
 
-const styles = {
-  wrapper: tw("space-y-8"),
-};
+type ViewMode = "editing" | "creating";
 
 const CAP_MESSAGE = `You can only have up to ${MAX_PROFILES} Profiles — delete one first.`;
 
@@ -32,16 +29,22 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
     profiles,
     (initialProfiles): ProfilesState => ({
       profiles: initialProfiles,
-      selectedId: initialProfiles[0].id,
+      selectedId: initialProfiles[0]?.id ?? "",
     }),
   );
+  // Brand-new users start with 0 Profiles — go straight to the entry screen
+  // rather than a dead-end "editing" view with no Profile to render.
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    profiles.length === 0 ? "creating" : "editing",
+  );
 
-  const handleCreateBlank = () => {
+  const handleStartBlank = () => {
     if (!canCreateProfile(state)) {
       toast.error(CAP_MESSAGE);
       return;
     }
     dispatch({ type: "CREATE_BLANK" });
+    setViewMode("editing");
   };
 
   const handleDuplicate = (profileId: string) => {
@@ -50,6 +53,7 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
       return;
     }
     dispatch({ type: "DUPLICATE", profileId });
+    setViewMode("editing");
   };
 
   const handleImport = (profile: Profile) => {
@@ -58,6 +62,7 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
       return;
     }
     dispatch({ type: "IMPORT_PROFILE", profile });
+    setViewMode("editing");
   };
 
   const handleDelete = (profileId: string) => {
@@ -68,6 +73,20 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
     dispatch({ type: "DELETE", profileId });
   };
 
+  if (viewMode === "creating") {
+    return (
+      <ProfileEntryScreen
+        existingProfiles={state.profiles}
+        onStartBlank={handleStartBlank}
+        onDuplicate={handleDuplicate}
+        onImport={handleImport}
+        onCancel={
+          state.profiles.length > 0 ? () => setViewMode("editing") : undefined
+        }
+      />
+    );
+  }
+
   const selectedProfile = state.profiles.find(
     (profile) => profile.id === state.selectedId,
   );
@@ -75,21 +94,14 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
   if (!selectedProfile) return null;
 
   return (
-    <div className={styles.wrapper}>
-      <ProfileSwitcher
-        profiles={state.profiles}
-        selectedId={state.selectedId}
-        onSelect={(profileId) => dispatch({ type: "SELECT", profileId })}
-        onDelete={handleDelete}
-        onCreateBlank={handleCreateBlank}
-        onDuplicate={handleDuplicate}
-        onImport={handleImport}
-      />
-      <ProfileEditor
-        key={selectedProfile.id}
-        profile={selectedProfile}
-        dispatch={dispatch}
-      />
-    </div>
+    <ProfileEditor
+      key={selectedProfile.id}
+      profile={selectedProfile}
+      profiles={state.profiles}
+      dispatch={dispatch}
+      onSelect={(profileId) => dispatch({ type: "SELECT", profileId })}
+      onDelete={handleDelete}
+      onRequestNew={() => setViewMode("creating")}
+    />
   );
 };

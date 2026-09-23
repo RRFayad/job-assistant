@@ -4,8 +4,7 @@ import { ProfileWorkspace } from "@/components/subscribed/profile/profile-worksp
 import { tw } from "@/lib/utils";
 
 const styles = {
-  page: tw("mx-auto w-full max-w-7xl space-y-8"),
-  empty: tw("text-sm text-muted-foreground"),
+  page: tw("mx-auto w-full max-w-4xl space-y-6"),
   error: tw("text-sm text-destructive"),
 };
 
@@ -23,21 +22,8 @@ const ProfilePage = async () => {
     );
   }
 
-  if (profiles.length === 0) {
-    return (
-      <main className={styles.page}>
-        <PageHeader title="Profile" />
-        <p className={styles.empty}>No Profiles yet.</p>
-      </main>
-    );
-  }
-
   return (
     <main className={styles.page}>
-      <PageHeader
-        title="Profile"
-        description="Build and maintain the Profiles your tailored resumes are grounded in."
-      />
       <ProfileWorkspace profiles={profiles} />
     </main>
   );

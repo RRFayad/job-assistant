@@ -1,11 +1,13 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PairsSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
+
+import { bareInputClass, iconButtonClass } from "./editor-field-styles";
 
 type Pair = PairsSection["pairs"][number];
 
@@ -15,8 +17,10 @@ type PairsSectionEditorProps = {
 };
 
 const styles = {
-  list: tw("space-y-2"),
-  row: tw("grid gap-2 sm:grid-cols-[1fr_1fr_auto]"),
+  pairRow: tw("mt-2 flex items-center gap-2 first:mt-0"),
+  bareInput: bareInputClass,
+  iconButton: iconButtonClass,
+  addButton: tw("mt-3"),
 };
 
 const createPair = (): Pair => ({
@@ -50,36 +54,43 @@ export const PairsSectionEditor = ({
   };
 
   return (
-    <div className={styles.list}>
+    <>
       {section.pairs.map((pair) => (
-        <div key={pair.id} className={styles.row}>
+        <div key={pair.id} className={styles.pairRow}>
           <Input
             aria-label="Label"
-            placeholder="Label (e.g. Portuguese)"
+            className={styles.bareInput}
+            placeholder="Label"
             value={pair.left}
             onChange={(e) => updatePair(pair.id, { left: e.target.value })}
           />
           <Input
             aria-label="Value"
-            placeholder="Value (e.g. Native)"
+            className={styles.bareInput}
+            placeholder="Value"
             value={pair.right}
             onChange={(e) => updatePair(pair.id, { right: e.target.value })}
           />
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon-sm"
+            className={styles.iconButton}
             aria-label="Remove pair"
             onClick={() => removePair(pair.id)}
           >
-            <Trash2Icon />
-          </Button>
+            <XIcon className="size-3.5" />
+          </button>
         </div>
       ))}
 
-      <Button type="button" variant="outline" size="sm" onClick={addPair}>
-        Add pair
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={styles.addButton}
+        onClick={addPair}
+      >
+        Add
       </Button>
-    </div>
+    </>
   );
 };

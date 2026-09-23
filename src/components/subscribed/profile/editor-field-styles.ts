@@ -1,0 +1,14 @@
+import { tw } from "@/lib/utils";
+
+// Shared by every Profile editor surface (header, sections) that renders a
+// borderless underline text field or a small square icon-only button, so a
+// future visual tweak to either only needs to happen once. Import into each
+// file's own local `styles` object rather than using these directly, per
+// AGENTS.md's "local styles object" convention.
+export const bareInputClass = tw(
+  "w-full border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm focus-visible:ring-0",
+);
+
+export const iconButtonClass = tw(
+  "flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground",
+);

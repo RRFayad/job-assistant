@@ -1,11 +1,14 @@
 "use client";
 
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { Trash2Icon, XIcon } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { TagsSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
+
+import { bareInputClass, iconButtonClass } from "./editor-field-styles";
 
 type Category = TagsSection["categories"][number];
 
@@ -15,18 +18,20 @@ type TagsSectionEditorProps = {
 };
 
 const styles = {
-  list: tw("space-y-4"),
-  category: tw("space-y-2 rounded-lg border border-dashed p-3"),
-  categoryHeader: tw("flex items-center gap-2"),
-  categoryLabel: tw("flex-1"),
-  tags: tw("flex flex-wrap items-center gap-2"),
-  tagRow: tw("flex items-center gap-1"),
-  tagInput: tw("h-7 w-32"),
+  categoryBlock: tw("mt-4 space-y-2 first:mt-0"),
+  categoryHeadRow: tw("flex items-center gap-2"),
+  bareInput: bareInputClass,
+  iconButton: iconButtonClass,
+  tagRow: tw("flex flex-wrap items-center gap-2"),
+  tag: tw("flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs"),
+  tagRemove: tw("text-muted-foreground hover:text-foreground"),
+  tagInput: tw("h-7 w-32 text-xs"),
+  addCategoryButton: tw("mt-3"),
 };
 
 const createCategory = (): Category => ({
   id: crypto.randomUUID(),
-  label: "New Category",
+  label: "",
   items: [],
 });
 
@@ -57,90 +62,90 @@ export const TagsSectionEditor = ({
     });
   };
 
-  const addTag = (categoryId: string) => {
-    const category = section.categories.find((c) => c.id === categoryId);
-    if (!category) return;
-    updateCategory(categoryId, { items: [...category.items, ""] });
-  };
-
-  const updateTag = (categoryId: string, index: number, value: string) => {
-    const category = section.categories.find((c) => c.id === categoryId);
-    if (!category) return;
-    updateCategory(categoryId, {
-      items: category.items.map((item, i) => (i === index ? value : item)),
-    });
-  };
-
-  const removeTag = (categoryId: string, index: number) => {
-    const category = section.categories.find((c) => c.id === categoryId);
-    if (!category) return;
-    updateCategory(categoryId, {
-      items: category.items.filter((_, i) => i !== index),
-    });
-  };
-
   return (
-    <div className={styles.list}>
+    <>
       {section.categories.map((category) => (
-        <div key={category.id} className={styles.category}>
-          <div className={styles.categoryHeader}>
+        <div key={category.id} className={styles.categoryBlock}>
+          <div className={styles.categoryHeadRow}>
             <Input
-              className={styles.categoryLabel}
+              className={styles.bareInput}
+              placeholder="Category name"
               value={category.label}
               onChange={(e) =>
                 updateCategory(category.id, { label: e.target.value })
               }
-              aria-label="Category name"
             />
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              size="icon-sm"
+              className={styles.iconButton}
               aria-label="Remove category"
               onClick={() => removeCategory(category.id)}
             >
-              <Trash2Icon />
-            </Button>
+              <Trash2Icon className="size-3.5" />
+            </button>
           </div>
-          <div className={styles.tags}>
-            {category.items.map((item, index) => (
-              <div key={index} className={styles.tagRow}>
-                <Input
-                  aria-label="Tag"
-                  className={styles.tagInput}
-                  value={item}
-                  placeholder="Tag"
-                  onChange={(e) =>
-                    updateTag(category.id, index, e.target.value)
-                  }
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label="Remove tag"
-                  onClick={() => removeTag(category.id, index)}
-                >
-                  <Trash2Icon />
-                </Button>
-              </div>
-            ))}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => addTag(category.id)}
-            >
-              <PlusIcon />
-              Add tag
-            </Button>
-          </div>
+          <TagEditor
+            items={category.items}
+            onChange={(items) => updateCategory(category.id, { items })}
+          />
         </div>
       ))}
-
-      <Button type="button" variant="outline" size="sm" onClick={addCategory}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={styles.addCategoryButton}
+        onClick={addCategory}
+      >
         Add category
       </Button>
+    </>
+  );
+};
+
+const TagEditor = ({
+  items,
+  onChange,
+}: {
+  items: string[];
+  onChange: (items: string[]) => void;
+}) => {
+  const [draft, setDraft] = useState("");
+
+  const commitDraft = () => {
+    const value = draft.trim();
+    if (value) onChange([...items, value]);
+    setDraft("");
+  };
+
+  return (
+    <div className={styles.tagRow}>
+      {items.map((item, index) => (
+        <span key={index} className={styles.tag}>
+          {item}
+          <button
+            type="button"
+            className={styles.tagRemove}
+            aria-label={`Remove ${item}`}
+            onClick={() => onChange(items.filter((_, i) => i !== index))}
+          >
+            <XIcon className="size-3" />
+          </button>
+        </span>
+      ))}
+      <Input
+        className={styles.tagInput}
+        placeholder="+ Add"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commitDraft}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commitDraft();
+          }
+        }}
+      />
     </div>
   );
 };

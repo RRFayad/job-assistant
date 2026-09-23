@@ -3,6 +3,7 @@
 import {
   BoldIcon,
   EyeIcon,
+  EyeOffIcon,
   ItalicIcon,
   LinkIcon,
   ListIcon,
@@ -25,14 +26,20 @@ type RichTextFieldProps = {
 };
 
 const styles = {
-  wrapper: tw("space-y-2"),
-  toolbar: tw("flex items-center gap-1"),
+  wrapper: tw("space-y-1.5"),
+  toolbar: tw("flex items-center gap-0.5"),
+  icon: tw("size-3.5"),
   textarea: tw(
-    "w-full resize-y rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+    "w-full resize-y rounded-md border bg-background px-2 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
   ),
   preview: tw(
-    "rounded-lg border border-dashed p-3 text-sm [&_ul]:list-disc [&_ul]:pl-5",
+    "rounded-md border border-dashed bg-muted/30 p-2 text-sm leading-relaxed [&_ul]:list-disc [&_ul]:pl-5",
   ),
+  previewLabel: tw(
+    "mb-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase",
+  ),
+  bulletButton: tw("ml-1 text-xs"),
+  previewToggle: tw("ml-auto"),
 };
 
 export const RichTextField = ({
@@ -160,7 +167,7 @@ export const RichTextField = ({
           aria-label="Bold"
           onClick={() => applyMarker("**")}
         >
-          <BoldIcon />
+          <BoldIcon className={styles.icon} />
         </Button>
         <Button
           type="button"
@@ -169,7 +176,7 @@ export const RichTextField = ({
           aria-label="Italic"
           onClick={() => applyMarker("*")}
         >
-          <ItalicIcon />
+          <ItalicIcon className={styles.icon} />
         </Button>
         <Button
           type="button"
@@ -178,7 +185,7 @@ export const RichTextField = ({
           aria-label="Underline"
           onClick={() => applyMarker("++")}
         >
-          <UnderlineIcon />
+          <UnderlineIcon className={styles.icon} />
         </Button>
         <Button
           type="button"
@@ -187,19 +194,30 @@ export const RichTextField = ({
           aria-label="Link"
           onClick={insertLink}
         >
-          <LinkIcon />
+          <LinkIcon className={styles.icon} />
         </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={insertBullet}>
-          <ListIcon />+ Bullet
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className={styles.bulletButton}
+          onClick={insertBullet}
+        >
+          <ListIcon className={styles.icon} />+ Bullet
         </Button>
         <Button
           type="button"
           variant={showPreview ? "secondary" : "ghost"}
           size="icon-sm"
-          aria-label="Toggle preview"
+          className={styles.previewToggle}
+          aria-label={showPreview ? "Hide preview" : "Show preview"}
           onClick={() => setShowPreview((prev) => !prev)}
         >
-          <EyeIcon />
+          {showPreview ? (
+            <EyeOffIcon className={styles.icon} />
+          ) : (
+            <EyeIcon className={styles.icon} />
+          )}
         </Button>
       </div>
 
@@ -212,10 +230,12 @@ export const RichTextField = ({
       />
 
       {showPreview && (
-        <div
-          className={styles.preview}
-          dangerouslySetInnerHTML={{ __html: renderMarkdownLite(value) }}
-        />
+        <div className={styles.preview}>
+          <p className={styles.previewLabel}>Preview</p>
+          <div
+            dangerouslySetInnerHTML={{ __html: renderMarkdownLite(value) }}
+          />
+        </div>
       )}
     </div>
   );

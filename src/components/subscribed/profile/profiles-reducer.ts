@@ -91,6 +91,7 @@ export const profilesReducer = (
       const existingNames = state.profiles.map((p) => p.name);
       const imported: Profile = {
         ...structuredClone(action.profile),
+        id: crypto.randomUUID(),
         name: uniqueName(action.profile.name, existingNames),
       };
       return {

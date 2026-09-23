@@ -1,6 +1,6 @@
 "use client";
 
-import { SparklesIcon } from "lucide-react";
+import { CheckIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,19 +14,27 @@ import { renderMarkdownLite } from "./markdown-lite";
 
 type AskAiPanelProps = {
   target: SuggestionTarget;
+  onClose: () => void;
   onAccept: (suggestion: SuggestionTarget) => void;
 };
 
 type Status = "idle" | "loading" | "ready" | "error";
 
 const styles = {
-  wrapper: tw("space-y-2"),
-  toggle: tw("text-muted-foreground"),
-  card: tw("space-y-3 rounded-lg border border-dashed p-3"),
-  label: tw("text-xs font-medium text-muted-foreground uppercase"),
+  wrap: tw(
+    "mt-4 rounded-lg border border-primary/25 bg-primary/4 p-3 dark:bg-primary/10",
+  ),
+  head: tw("flex items-center gap-1.5 text-xs font-semibold text-primary"),
+  proposedCard: tw(
+    "mt-2 rounded-lg border border-primary/30 bg-primary/5 p-2.5 text-sm",
+  ),
+  proposedLabel: tw(
+    "mb-1 text-[10px] font-semibold tracking-wide text-primary uppercase",
+  ),
   preview: tw("text-sm [&_ul]:list-disc [&_ul]:pl-5"),
-  actions: tw("flex items-center gap-2"),
+  actions: tw("mt-2 flex items-center gap-2"),
   error: tw("text-sm text-destructive"),
+  thinking: tw("text-sm text-muted-foreground"),
 };
 
 const SuggestionPreview = ({ target }: { target: SuggestionTarget }) => {
@@ -86,21 +94,13 @@ const SuggestionPreview = ({ target }: { target: SuggestionTarget }) => {
   }
 };
 
-export const AskAiPanel = ({ target, onAccept }: AskAiPanelProps) => {
-  const [open, setOpen] = useState(false);
+export const AskAiPanel = ({ target, onClose, onAccept }: AskAiPanelProps) => {
   const [status, setStatus] = useState<Status>("idle");
   const [suggestion, setSuggestion] = useState<SuggestionTarget | null>(null);
   const isMounted = useRef(true);
   // Bumped on every fetch, so a response from a superseded/abandoned request
-  // (panel closed and reopened, or unmounted mid-flight) can't apply itself.
+  // (unmounted mid-flight) can't apply itself.
   const requestId = useRef(0);
-
-  useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
 
   const runFetch = async () => {
     const thisRequest = (requestId.current += 1);
@@ -118,77 +118,66 @@ export const AskAiPanel = ({ target, onAccept }: AskAiPanelProps) => {
     }
   };
 
-  const handleToggle = () => {
-    const next = !open;
-    setOpen(next);
-
-    // Always fetch fresh on open — target reflects the current header/section,
-    // so a suggestion cached from before an intervening edit could otherwise
-    // be Accepted and silently overwrite that edit (ADR-0006).
-    if (next) {
-      runFetch();
-    } else {
-      requestId.current += 1; // invalidate any fetch in flight
-    }
-  };
+  useEffect(() => {
+    isMounted.current = true;
+    // The parent mounts this component fresh each time the toggle opens
+    // (rather than passing an `open` boolean to an always-mounted instance),
+    // so "just mounted" already means "just opened" — fetch immediately.
+    // This also means closing and reopening always starts from a clean
+    // slate and fetches fresh, so a suggestion cached from before an
+    // intervening edit can never be Accepted and silently overwrite it
+    // (ADR-0006).
+    //
+    // Deferred to a microtask so the first setState happens in a callback,
+    // not synchronously within the effect body itself — this repo's
+    // react-hooks/set-state-in-effect rule flags a direct call here.
+    Promise.resolve().then(() => runFetch());
+    return () => {
+      isMounted.current = false;
+    };
+    // Intentionally mount-only: the parent remounts a fresh instance per
+    // open, so this must not re-fetch on a later `target` change within the
+    // same mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAccept = () => {
     if (!suggestion) return;
     onAccept(suggestion);
-    setSuggestion(null);
-    setStatus("idle");
-    setOpen(false);
-  };
-
-  const handleDismiss = () => {
-    setSuggestion(null);
-    setStatus("idle");
-    setOpen(false);
+    onClose();
   };
 
   return (
-    <div className={styles.wrapper}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        className={styles.toggle}
-        onClick={handleToggle}
-      >
-        <SparklesIcon />
+    <div className={styles.wrap}>
+      <div className={styles.head}>
+        <SparklesIcon className="size-3.5" />
         Ask AI
-      </Button>
+      </div>
 
-      {open && (
-        <div className={styles.card}>
-          {status === "loading" && <p className={styles.preview}>Thinking…</p>}
-          {status === "error" && (
-            <>
-              <p className={styles.error}>Failed to get a suggestion.</p>
-              <Button type="button" size="sm" onClick={runFetch}>
-                Try again
-              </Button>
-            </>
-          )}
-          {status === "ready" && suggestion && (
-            <>
-              <p className={styles.label}>Suggested</p>
-              <SuggestionPreview target={suggestion} />
-              <div className={styles.actions}>
-                <Button type="button" size="sm" onClick={handleAccept}>
-                  Accept
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDismiss}
-                >
-                  Dismiss
-                </Button>
-              </div>
-            </>
-          )}
+      {status === "loading" && <p className={styles.thinking}>Thinking…</p>}
+
+      {status === "error" && (
+        <div className={styles.actions}>
+          <p className={styles.error}>Failed to get a suggestion.</p>
+          <Button type="button" size="sm" onClick={runFetch}>
+            Try again
+          </Button>
+        </div>
+      )}
+
+      {status === "ready" && suggestion && (
+        <div className={styles.proposedCard}>
+          <p className={styles.proposedLabel}>Suggested change</p>
+          <SuggestionPreview target={suggestion} />
+          <div className={styles.actions}>
+            <Button type="button" size="sm" onClick={handleAccept}>
+              <CheckIcon />
+              Accept
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+              Dismiss
+            </Button>
+          </div>
         </div>
       )}
     </div>

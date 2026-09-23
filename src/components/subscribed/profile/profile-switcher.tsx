@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -14,29 +14,33 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import type { Profile } from "@/lib/backend/profile";
 import { cn, tw } from "@/lib/utils";
-
-import { CreateProfileDialog } from "./create-profile-dialog";
 
 type ProfileSwitcherProps = {
   profiles: Profile[];
   selectedId: string;
   onSelect: (profileId: string) => void;
   onDelete: (profileId: string) => void;
-  onCreateBlank: () => void;
-  onDuplicate: (profileId: string) => void;
-  onImport: (profile: Profile) => void;
+  onRequestNew: () => void;
 };
 
 const styles = {
   row: tw("flex flex-wrap items-center gap-2"),
-  tab: tw("flex items-center gap-0.5 rounded-lg border p-0.5"),
-  tabButton: tw(
-    "rounded-md px-2 py-1 text-sm text-muted-foreground hover:text-foreground",
+  chip: tw(
+    "flex items-center overflow-hidden rounded-full border bg-card text-sm",
   ),
-  tabButtonActive: tw("bg-muted font-medium text-foreground"),
+  chipActive: tw("border-primary bg-primary/5"),
+  chipSelect: tw("px-3 py-1.5 font-medium"),
+  // Deliberate, deliberate deviation from the prototype's window.confirm():
+  // an accessible AlertDialog for a destructive action instead of a native
+  // browser confirm — see #12's Out of Scope.
+  deleteButton: tw(
+    "flex size-7 items-center justify-center border-l text-muted-foreground hover:bg-muted hover:text-foreground",
+  ),
+  addButton: tw(
+    "flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1.5 text-sm text-muted-foreground hover:border-primary/60 hover:text-foreground",
+  ),
 };
 
 type DeleteProfileButtonProps = {
@@ -54,14 +58,13 @@ const DeleteProfileButton = ({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon-xs"
+            className={styles.deleteButton}
             aria-label={`Delete ${profile.name}`}
           >
-            <Trash2Icon />
-          </Button>
+            <Trash2Icon className="size-3.5" />
+          </button>
         }
       />
       <AlertDialogContent>
@@ -94,20 +97,21 @@ export const ProfileSwitcher = ({
   selectedId,
   onSelect,
   onDelete,
-  onCreateBlank,
-  onDuplicate,
-  onImport,
+  onRequestNew,
 }: ProfileSwitcherProps) => {
   return (
     <div className={styles.row}>
       {profiles.map((profile) => (
-        <div key={profile.id} className={styles.tab}>
+        <div
+          key={profile.id}
+          className={cn(
+            styles.chip,
+            profile.id === selectedId && styles.chipActive,
+          )}
+        >
           <button
             type="button"
-            className={cn(
-              styles.tabButton,
-              profile.id === selectedId && styles.tabButtonActive,
-            )}
+            className={styles.chipSelect}
             onClick={() => onSelect(profile.id)}
           >
             {profile.name}
@@ -115,12 +119,10 @@ export const ProfileSwitcher = ({
           <DeleteProfileButton profile={profile} onDelete={onDelete} />
         </div>
       ))}
-      <CreateProfileDialog
-        profiles={profiles}
-        onCreateBlank={onCreateBlank}
-        onDuplicate={onDuplicate}
-        onImport={onImport}
-      />
+      <button type="button" className={styles.addButton} onClick={onRequestNew}>
+        <PlusIcon className="size-3.5" />
+        New Profile
+      </button>
     </div>
   );
 };

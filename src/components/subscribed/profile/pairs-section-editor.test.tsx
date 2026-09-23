@@ -16,11 +16,11 @@ const section: PairsSection = {
 };
 
 describe("PairsSectionEditor", () => {
-  it("appends a blank pair when Add pair is clicked", () => {
+  it("appends a blank pair when Add is clicked", () => {
     const onChange = vi.fn();
     render(<PairsSectionEditor section={section} onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Add pair" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
 
     const call = onChange.mock.calls[0][0] as PairsSection;
     expect(call.pairs).toHaveLength(3);

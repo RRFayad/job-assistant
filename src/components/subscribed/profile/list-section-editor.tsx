@@ -1,12 +1,13 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import type { ListSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
+import { iconButtonClass } from "./editor-field-styles";
 import { RichTextField } from "./rich-text-field";
 
 type ListSectionEditorProps = {
@@ -15,9 +16,10 @@ type ListSectionEditorProps = {
 };
 
 const styles = {
-  list: tw("space-y-3"),
-  item: tw("flex items-start gap-2"),
+  itemRow: tw("mt-3 flex items-start gap-2 first:mt-0"),
   field: tw("flex-1"),
+  iconButton: iconButtonClass,
+  addButton: tw("mt-3"),
 };
 
 export const ListSectionEditor = ({
@@ -54,30 +56,35 @@ export const ListSectionEditor = ({
   };
 
   return (
-    <div className={styles.list}>
+    <>
       {section.items.map((item, index) => (
-        <div key={keys[index] ?? index} className={styles.item}>
+        <div key={keys[index] ?? index} className={styles.itemRow}>
           <div className={styles.field}>
             <RichTextField
               value={item}
               onChange={(value) => updateItem(index, value)}
             />
           </div>
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            size="icon-sm"
+            className={styles.iconButton}
             aria-label="Remove item"
             onClick={() => removeItem(index)}
           >
-            <Trash2Icon />
-          </Button>
+            <XIcon className="size-3.5" />
+          </button>
         </div>
       ))}
 
-      <Button type="button" variant="outline" size="sm" onClick={addItem}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className={styles.addButton}
+        onClick={addItem}
+      >
         Add item
       </Button>
-    </div>
+    </>
   );
 };
