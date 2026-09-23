@@ -46,7 +46,25 @@ export const getEnvVar = ((
 
 export const parseContentDispositionFilename = (
   header: string | null | undefined,
-): string | null => header?.match(/filename="?([^"]+)"?/)?.[1] ?? null;
+): string | null => {
+  if (!header) return null;
+
+  // Prefer the RFC 6266 filename*=UTF-8''<percent-encoded> parameter, which
+  // carries the real name — the plain filename="..." alongside it is only
+  // an ASCII-safe fallback for clients that don't support the former (see
+  // backend's _content_disposition), so parsing only the fallback silently
+  // degrades any non-ASCII name (e.g. "José Á" becomes "Jos-A" downloaded).
+  const utf8Match = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utf8Match) {
+    try {
+      return decodeURIComponent(utf8Match[1]);
+    } catch {
+      // Malformed percent-encoding — fall through to the plain parameter.
+    }
+  }
+
+  return header.match(/filename="?([^"]+)"?/)?.[1] ?? null;
+};
 
 export const getErrorMessageAndThrow = (
   logMessage: string,

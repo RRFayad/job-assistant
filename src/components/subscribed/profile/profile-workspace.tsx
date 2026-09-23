@@ -38,32 +38,33 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
     profiles.length === 0 ? "creating" : "editing",
   );
 
-  const handleStartBlank = () => {
+  // Shared by every action that adds a Profile, so the 3-Profile cap can't
+  // be enforced in one call site and forgotten in the next.
+  const withCapCheck = (action: () => void) => {
     if (!canCreateProfile(state)) {
       toast.error(CAP_MESSAGE);
       return;
     }
-    dispatch({ type: "CREATE_BLANK" });
-    setViewMode("editing");
+    action();
   };
 
-  const handleDuplicate = (profileId: string) => {
-    if (!canCreateProfile(state)) {
-      toast.error(CAP_MESSAGE);
-      return;
-    }
-    dispatch({ type: "DUPLICATE", profileId });
-    setViewMode("editing");
-  };
+  const handleStartBlank = () =>
+    withCapCheck(() => {
+      dispatch({ type: "CREATE_BLANK" });
+      setViewMode("editing");
+    });
 
-  const handleImport = (profile: Profile) => {
-    if (!canCreateProfile(state)) {
-      toast.error(CAP_MESSAGE);
-      return;
-    }
-    dispatch({ type: "IMPORT_PROFILE", profile });
-    setViewMode("editing");
-  };
+  const handleDuplicate = (profileId: string) =>
+    withCapCheck(() => {
+      dispatch({ type: "DUPLICATE", profileId });
+      setViewMode("editing");
+    });
+
+  const handleImport = (profile: Profile) =>
+    withCapCheck(() => {
+      dispatch({ type: "IMPORT_PROFILE", profile });
+      setViewMode("editing");
+    });
 
   const handleDelete = (profileId: string) => {
     if (!canDeleteProfile(state)) {
@@ -73,13 +74,7 @@ export const ProfileWorkspace = ({ profiles }: ProfileWorkspaceProps) => {
     dispatch({ type: "DELETE", profileId });
   };
 
-  const handleRequestNew = () => {
-    if (!canCreateProfile(state)) {
-      toast.error(CAP_MESSAGE);
-      return;
-    }
-    setViewMode("creating");
-  };
+  const handleRequestNew = () => withCapCheck(() => setViewMode("creating"));
 
   if (viewMode === "creating") {
     return (

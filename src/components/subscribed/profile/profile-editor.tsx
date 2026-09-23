@@ -5,7 +5,7 @@ import type { Dispatch } from "react";
 
 import { PageHeader } from "@/components/subscribed/page-header";
 import type { Profile } from "@/lib/backend/profile";
-import { cn, tw } from "@/lib/utils";
+import { tw } from "@/lib/utils";
 
 import { ExportPdfButton } from "./export-pdf-button";
 import { ExportProfileButton } from "./export-profile-button";
@@ -29,7 +29,7 @@ const styles = {
   wrapper: tw("space-y-6"),
   headerActions: tw("flex items-center gap-3"),
   saveStatus: tw("flex items-center gap-1.5 text-xs text-muted-foreground"),
-  saveStatusDone: tw("text-emerald-600 dark:text-emerald-400"),
+  saveStatusDoneIcon: tw("size-3.5 text-emerald-600 dark:text-emerald-400"),
 };
 
 // Keyed by profile.id in ProfileWorkspace, so switching Profiles remounts
@@ -65,9 +65,7 @@ export const ProfileEditor = ({
               )}
               {saveStatus === "saved" && (
                 <>
-                  <CheckIcon
-                    className={cn("size-3.5", styles.saveStatusDone)}
-                  />
+                  <CheckIcon className={styles.saveStatusDoneIcon} />
                   All changes saved
                 </>
               )}
