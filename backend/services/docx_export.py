@@ -411,9 +411,10 @@ def _render_entries(
     document: Document, snippets: _Snippets, section: EntriesSection
 ) -> None:
     for entry in section.entries:
-        title_el = copy.deepcopy(snippets.job_title)
-        _set_run_text(title_el.find(qn("w:r")), entry.heading)
-        _append_element(document, title_el)
+        if entry.heading:
+            title_el = copy.deepcopy(snippets.job_title)
+            _set_run_text(title_el.find(qn("w:r")), entry.heading)
+            _append_element(document, title_el)
 
         if entry.dates:
             dates_el = copy.deepcopy(snippets.job_dates)

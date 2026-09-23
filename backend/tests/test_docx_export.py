@@ -292,6 +292,35 @@ def test_entries_section_omits_dates_line_when_dates_is_empty() -> None:
     assert index == len(texts) - 1 or texts[index + 1] != ""
 
 
+def test_entries_section_omits_the_title_line_when_heading_is_empty() -> None:
+    # An entry the candidate chose not to detail — no company name, dates,
+    # or description, just a brief bulleted summary in the body.
+    profile = _make_profile(
+        sections=[
+            EntriesSection(
+                id="s1",
+                type="entries",
+                title="Experience",
+                entries=[
+                    Entry(
+                        id="e1",
+                        heading="",
+                        dates="",
+                        body="- Senior R&D Consultant at PwC",
+                    ),
+                ],
+            ),
+        ]
+    )
+    document = _reload(build_resume_document(profile))
+    texts = _paragraph_texts(document)
+
+    heading_index = texts.index("Experience")
+    # The bullet is the very next paragraph — no blank title/dates line for
+    # the omitted heading in between.
+    assert texts[heading_index + 1] == "Senior R&D Consultant at PwC"
+
+
 def test_list_section_renders_each_item_as_its_own_paragraph() -> None:
     profile = _make_profile(
         sections=[
