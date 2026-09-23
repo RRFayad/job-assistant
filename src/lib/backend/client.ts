@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import axios, { type AxiosInstance } from "axios";
 
-import { getEnvVar } from "@/lib/utils";
+import { getEnvVar, parseContentDispositionFilename } from "@/lib/utils";
 
 const backendUrl = getEnvVar("BACKEND_URL");
 
@@ -67,4 +67,34 @@ export const saveBackendData = async <T>(
   );
 
   return response !== null;
+};
+
+export type BackendBlob = {
+  data: ArrayBuffer;
+  contentType: string;
+  filename: string | null;
+};
+
+export const fetchBackendBlob = async <T>(
+  endpoint: string,
+  body: T,
+  logMessage = `Failed to fetch backend blob: ${endpoint}`,
+): Promise<BackendBlob | null> => {
+  const response = await callBackend(
+    (client) =>
+      client.post<ArrayBuffer>(endpoint, body, { responseType: "arraybuffer" }),
+    logMessage,
+  );
+
+  if (!response) return null;
+
+  const contentDisposition = response.headers["content-disposition"] as
+    string | undefined;
+  const contentType = response.headers["content-type"] as string | undefined;
+
+  return {
+    data: response.data,
+    contentType: contentType ?? "application/octet-stream",
+    filename: parseContentDispositionFilename(contentDisposition),
+  };
 };

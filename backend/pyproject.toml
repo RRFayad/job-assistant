@@ -10,6 +10,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "isort>=9.0.1",
     "psycopg[binary]>=3.3.4",
+    "python-docx>=1.2.0",
     "python-dotenv>=1.2.3",
     "sqlalchemy>=2.0.52",
 ]
@@ -17,5 +18,13 @@ dependencies = [
 [tool.isort]
 profile = "black"
 
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
 [tool.fastapi]
 entrypoint = "main:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

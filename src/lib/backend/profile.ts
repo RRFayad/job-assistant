@@ -1,6 +1,11 @@
 "use server";
 
-import { fetchBackendData, saveBackendData } from "./client";
+import {
+  fetchBackendBlob,
+  fetchBackendData,
+  saveBackendData,
+  type BackendBlob,
+} from "./client";
 
 export type ProfileLink = {
   id: string;
@@ -70,4 +75,13 @@ export const fetchProfiles = async (): Promise<Profile[] | null> => {
 
 export const saveProfile = async (profile: Profile): Promise<boolean> => {
   return saveBackendData(`/profile/${profile.id}`, profile);
+};
+
+// Called server-side only (from the /api/profile/export route handler), not
+// invoked directly as a Server Action — a raw binary Blob isn't a value the
+// Server Actions RSC boundary can serialize back to the client.
+export const exportProfileDocx = async (
+  profile: Profile,
+): Promise<BackendBlob | null> => {
+  return fetchBackendBlob("/profile/export", profile);
 };

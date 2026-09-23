@@ -1,101 +1,44 @@
-from typing import Annotated, Literal, Union
+import io
+import re
+from urllib.parse import quote
 
 from fastapi import APIRouter
-from pydantic import BaseModel, ConfigDict, Field
-from pydantic.alias_generators import to_camel
+from fastapi.responses import StreamingResponse
 from starlette import status
 
 from auth.auth import current_user_dependency
+from schemas.profile import (
+    EntriesSection,
+    Entry,
+    Profile,
+    ProfileHeader,
+    ProfileLink,
+    TextSection,
+)
+from services.docx_export import build_resume_document
 
 router = APIRouter(prefix="/profile", tags=["profile"])
 
-
-class CamelModel(BaseModel):
-    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+_UNSAFE_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
 
 
-class ProfileLink(CamelModel):
-    id: str
-    label: str
-    url: str
+def _build_export_filename(profile: Profile) -> str:
+    base = profile.header.full_name.strip() or profile.name.strip() or "resume"
+    base = _UNSAFE_FILENAME_CHARS.sub("", base)
+    base = "_".join(base.split()) or "resume"
+    return f"{base}.docx"
 
 
-class ProfileHeader(CamelModel):
-    full_name: str
-    career_title: str
-    email: str
-    phone: str
-    location: str
-    links: list[ProfileLink]
-    primary_color: str
-    secondary_color: str
-
-
-class TextSection(CamelModel):
-    id: str
-    type: Literal["text"]
-    title: str
-    body: str
-
-
-class TagCategory(CamelModel):
-    id: str
-    label: str
-    items: list[str]
-
-
-class TagsSection(CamelModel):
-    id: str
-    type: Literal["tags"]
-    title: str
-    categories: list[TagCategory]
-
-
-class Entry(CamelModel):
-    id: str
-    heading: str
-    dates: str
-    body: str
-
-
-class EntriesSection(CamelModel):
-    id: str
-    type: Literal["entries"]
-    title: str
-    entries: list[Entry]
-
-
-class ListSection(CamelModel):
-    id: str
-    type: Literal["list"]
-    title: str
-    items: list[str]
-
-
-class Pair(CamelModel):
-    id: str
-    left: str
-    right: str
-
-
-class PairsSection(CamelModel):
-    id: str
-    type: Literal["pairs"]
-    title: str
-    pairs: list[Pair]
-
-
-ProfileSection = Annotated[
-    Union[TextSection, TagsSection, EntriesSection, ListSection, PairsSection],
-    Field(discriminator="type"),
-]
-
-
-class Profile(CamelModel):
-    id: str
-    name: str
-    header: ProfileHeader
-    sections: list[ProfileSection]
+def _content_disposition(filename: str) -> str:
+    # A non-Latin-1 filename crashes ASGI's header encoding outright, so the
+    # plain `filename=` parameter always gets an ASCII-safe fallback; the
+    # RFC 6266 `filename*=` parameter carries the real name for the (near-
+    # universal) clients that support it.
+    ascii_filename = filename.encode("ascii", "replace").decode("ascii")
+    return (
+        f'attachment; filename="{ascii_filename}"; '
+        f"filename*=UTF-8''{quote(filename)}"
+    )
 
 
 SEED_PROFILES: list[Profile] = [
@@ -151,3 +94,26 @@ def save_profile(
 ) -> None:
     """Accepts and discards the payload — no persistence yet (see #4)."""
     return None
+
+
+@router.post("/export")
+def export_profile_docx(
+    profile: Profile, user: current_user_dependency
+) -> StreamingResponse:
+    """Stateless: renders whatever Profile the frontend sends, since no real
+    persistence exists yet to look one up by id (see #11)."""
+    document = build_resume_document(profile)
+
+    buffer = io.BytesIO()
+    document.save(buffer)
+    buffer.seek(0)
+
+    filename = _build_export_filename(profile)
+
+    return StreamingResponse(
+        buffer,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument" ".wordprocessingml.document"
+        ),
+        headers={"Content-Disposition": _content_disposition(filename)},
+    )

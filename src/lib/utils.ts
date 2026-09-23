@@ -44,6 +44,10 @@ export const getEnvVar = ((
   return value;
 }) as GetEnvVar;
 
+export const parseContentDispositionFilename = (
+  header: string | null | undefined,
+): string | null => header?.match(/filename="?([^"]+)"?/)?.[1] ?? null;
+
 export const getErrorMessageAndThrow = (
   logMessage: string,
   error: unknown,
