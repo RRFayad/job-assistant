@@ -56,7 +56,7 @@ export const ExportProfileButton = ({ profile }: ExportProfileButtonProps) => {
       disabled={isExporting}
     >
       <DownloadIcon />
-      {isExporting ? "Exporting…" : "Download .docx"}
+      {isExporting ? "Exporting…" : ".docx"}
     </Button>
   );
 };

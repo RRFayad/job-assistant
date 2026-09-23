@@ -16,7 +16,7 @@ export const ExportPdfButton = () => {
   return (
     <Button type="button" variant="outline" size="sm" onClick={handleClick}>
       <DownloadIcon />
-      Download .pdf
+      .pdf
     </Button>
   );
 };
