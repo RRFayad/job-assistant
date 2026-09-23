@@ -539,3 +539,29 @@ def test_cloned_paragraphs_do_not_carry_the_templates_leftover_div_id() -> None:
         pPr = paragraph._p.pPr
         div_id = pPr.find(qn("w:divId")) if pPr is not None else None
         assert div_id is None, f"stray divId on {paragraph.text!r}"
+
+
+def test_template_editor_comments_never_leak_into_a_generated_export() -> None:
+    """The template file has native Word comments annotating each cloned
+    piece, for a human editing the template — an exported resume must not
+    carry them. (python-docx's own `.comments` accessor lazily creates an
+    empty comments part as a side effect of being read, so this only
+    checks the relationship set *before* touching that property — which is
+    the state a real recipient's copy of the file is actually in.)"""
+    profile = _make_profile(
+        sections=[
+            TextSection(id="s1", type="text", title="Summary", body="Body."),
+            TagsSection(
+                id="s2",
+                type="tags",
+                title="Skills",
+                categories=[TagCategory(id="c1", label="Languages", items=["Python"])],
+            ),
+        ]
+    )
+    document = _reload(build_resume_document(profile))
+
+    assert not any("comments" in rel.reltype for rel in document.part.rels.values())
+
+    tags_paragraph = next(p for p in document.paragraphs if "Languages" in p.text)
+    assert tags_paragraph.text == "Languages: Python"

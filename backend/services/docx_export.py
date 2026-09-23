@@ -28,19 +28,25 @@ from services.markdown_lite import (
 )
 
 # The document this module builds from is the validated design reference
-# (docs/adr/0007-collapse-baseline-into-profile.md's prototype), not a
-# fixed-layout template filled in place — the flexible, variable-length
-# sections model doesn't fit a fixed template. Instead, small reusable
-# pieces (a section heading, a job title line, a bullet item, ...) are
-# cloned directly from its Word XML and refilled, so their typography
-# (fonts, sizes, colors, spacing) always matches the source design exactly
-# rather than being hand-picked in Python and drifting from it over time.
+# (docs/adr/0007-collapse-baseline-into-profile.md's prototype; see also
+# docs/adr/0009-docx-export-clones-template-pieces.md), not a fixed-layout
+# template filled in place — the flexible, variable-length sections model
+# doesn't fit a fixed template. Instead, small reusable pieces (a section
+# heading, a job title line, a bullet item, ...) are cloned directly from
+# its Word XML and refilled, so their typography (fonts, sizes, colors,
+# spacing) always matches the source design exactly rather than being
+# hand-picked in Python and drifting from it over time. Every cloned piece
+# has a native Word comment on it in the template file itself, explaining
+# what it's used for — open the file in Word and look for the comment
+# balloons before changing its layout.
+#
+# The no-picture header banner lives on the last page of this same file
+# (behind a page break), not a separate file — keeping both banners in one
+# document means they always share the same styles.xml/docDefaults, so they
+# can't silently drift out of sync with each other the way two independent
+# files could.
 _TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 RESUME_TEMPLATE_PATH = _TEMPLATES_DIR / "resume_template.docx"
-# Same header content, minus the picture column — used whenever the Profile
-# has no picture, so the header content takes the full width rather than
-# leaving an empty colored gap where a photo would have been.
-HEADER_NO_PIC_TEMPLATE_PATH = _TEMPLATES_DIR / "header_without_pic.docx"
 
 _LINK_RELATIONSHIP = (
     "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
@@ -84,36 +90,49 @@ class _Snippets:
     tags_line: object
 
 
-def _cloned_paragraph_without_div_id(paragraph):
-    """Deep-copies a paragraph, stripping `w:divId` — leftover metadata from
-    this template having been authored via an HTML/web paste. Word links a
-    `divId` to a border definition in word/webSettings.xml (not the
-    paragraph's own `w:pBdr`, which is why grep-ing the paragraph alone
-    finds nothing); left in place, every cloned occurrence of these
-    paragraphs would silently grow that div's border, invisible until
-    opened in Word and impossible to recolor per Profile.
+def _cloned_snippet(source_element):
+    """Deep-copies a paragraph or table, stripping editor-only metadata that
+    would otherwise leak into every occurrence cloned from it — or, worse,
+    into every generated export:
+
+    - `w:divId`: leftover from this template having been authored via an
+      HTML/web paste. Word links a `divId` to a border defined in
+      word/webSettings.xml — entirely separate from the paragraph's own
+      `w:pBdr`, which is why grep-ing the paragraph alone finds nothing.
+      Left in place, every clone would silently grow that div's fixed-color
+      border.
+    - `w:commentRangeStart`/`w:commentRangeEnd` and the `w:r` holding a
+      `w:commentReference`: the native Word comments in the template file
+      explaining what each piece is for, meant for a human editing the
+      template — never for the exported document, and their extra run
+      breaks any code that finds a piece's content by run position.
     """
-    element = copy.deepcopy(paragraph._p)
-    pPr = element.find(qn("w:pPr"))
-    if pPr is not None:
-        div_id = pPr.find(qn("w:divId"))
-        if div_id is not None:
-            pPr.remove(div_id)
+    element = copy.deepcopy(source_element)
+    for div_id in list(element.iter(qn("w:divId"))):
+        div_id.getparent().remove(div_id)
+    for marker in list(element.iter(qn("w:commentRangeStart"))) + list(
+        element.iter(qn("w:commentRangeEnd"))
+    ):
+        marker.getparent().remove(marker)
+    for run in list(element.iter(qn("w:r"))):
+        if run.find(qn("w:commentReference")) is not None:
+            run.getparent().remove(run)
     return element
 
 
 def _load_snippets(template: Document) -> _Snippets:
     paragraphs = template.paragraphs
-    no_pic_document = Document(HEADER_NO_PIC_TEMPLATE_PATH)
     return _Snippets(
-        header_table_with_picture=copy.deepcopy(template.tables[0]._tbl),
-        header_table_no_picture=copy.deepcopy(no_pic_document.tables[0]._tbl),
-        section_heading=_cloned_paragraph_without_div_id(paragraphs[1]),
-        body_paragraph=_cloned_paragraph_without_div_id(paragraphs[2]),
-        job_title=_cloned_paragraph_without_div_id(paragraphs[8]),
-        job_dates=_cloned_paragraph_without_div_id(paragraphs[9]),
-        bullet_item=_cloned_paragraph_without_div_id(paragraphs[11]),
-        tags_line=_cloned_paragraph_without_div_id(paragraphs[5]),
+        header_table_with_picture=_cloned_snippet(template.tables[0]._tbl),
+        # The alternate no-photo banner lives on this same file's last page
+        # (see the module docstring above) — not a separate document.
+        header_table_no_picture=_cloned_snippet(template.tables[1]._tbl),
+        section_heading=_cloned_snippet(paragraphs[1]._p),
+        body_paragraph=_cloned_snippet(paragraphs[2]._p),
+        job_title=_cloned_snippet(paragraphs[8]._p),
+        job_dates=_cloned_snippet(paragraphs[9]._p),
+        bullet_item=_cloned_snippet(paragraphs[11]._p),
+        tags_line=_cloned_snippet(paragraphs[5]._p),
     )
 
 
@@ -130,10 +149,18 @@ def _clear_body(document: Document) -> None:
     # table snippet was already deep-copied before this runs, and either
     # gets its picture relationship freshly created or never had one, so
     # dropping these here can't break it — see _build_header/_embed_picture.)
+    #
+    # The comments relationship is dropped unconditionally: every snippet
+    # clone strips its own comment anchors (see _cloned_snippet), so nothing
+    # in a generated export ever references word/comments.xml again — it'd
+    # otherwise still ship, unseen but readable, in every exported file,
+    # leaking the template's internal editor notes to whoever opens it.
     for r_id in [
         rid
         for rid, rel in document.part.rels.items()
-        if "hyperlink" in rel.reltype or "image" in rel.reltype
+        if "hyperlink" in rel.reltype
+        or "image" in rel.reltype
+        or "comments" in rel.reltype
     ]:
         document.part.drop_rel(r_id)
 

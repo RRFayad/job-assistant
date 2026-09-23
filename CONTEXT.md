@@ -17,8 +17,8 @@ One of up to three full resume/cover-letter entities a Candidate maintains — e
 _Avoid_: Baseline, career track, career goal, resume version, resume data, CV data
 
 **Resume Template**:
-The single, universal empty Word document scaffold each Profile's resume is built on. Ships with the product; not user- or profession-specific in v1. Stored at `backend/templates/resume_template.docx`. A Cover Letter Template follows once Cover Letter itself is built (see ROADMAP.md — deferred past v1.0).
-_Avoid_: format, layout, CV
+The Word document defining the exported resume's visual design (fonts, colors, spacing, section styling) — not a scaffold each export is filled into directly. A Profile's variable-length, reorderable sections don't fit its fixed layout, so pieces (section heading, job title, bullet, header banner, ...) are cloned from its Word XML and reassembled per-Profile instead; an alternate header banner for Profiles with no photo lives on its own page within the same file (see ADR-0009). Each cloned piece carries a native Word comment explaining what it's used for — read those before changing the file's layout. Ships with the product; not user- or profession-specific in v1. Stored at `backend/templates/resume_template.docx`. A Cover Letter Template follows once Cover Letter itself is built (see ROADMAP.md — deferred past v1.0).
+_Avoid_: format, layout, CV, fixed template, scaffold
 
 **Preferences**:
 Candidate-level (not Profile-level) job-search criteria used in matching: compensation range, company size, location, and sponsorship requirement.
