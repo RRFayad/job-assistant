@@ -5,9 +5,11 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from docx import Document
+from docx import Document as open_document
+from docx.document import Document
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from docx.oxml.xmlchemy import BaseOxmlElement
 from PIL import Image
 
 from schemas.profile import (
@@ -16,6 +18,7 @@ from schemas.profile import (
     PairsSection,
     Profile,
     ProfileHeader,
+    ProfileLink,
     ProfileSection,
     TagsSection,
     TextSection,
@@ -80,17 +83,17 @@ class _Snippets:
     limited to however many the template's own example content happens to
     have."""
 
-    header_table_with_picture: object
-    header_table_no_picture: object
-    section_heading: object
-    body_paragraph: object
-    job_title: object
-    job_dates: object
-    bullet_item: object
-    tags_line: object
+    header_table_with_picture: BaseOxmlElement
+    header_table_no_picture: BaseOxmlElement
+    section_heading: BaseOxmlElement
+    body_paragraph: BaseOxmlElement
+    job_title: BaseOxmlElement
+    job_dates: BaseOxmlElement
+    bullet_item: BaseOxmlElement
+    tags_line: BaseOxmlElement
 
 
-def _cloned_snippet(source_element):
+def _cloned_snippet(source_element: BaseOxmlElement) -> BaseOxmlElement:
     """Deep-copies a paragraph or table, stripping editor-only metadata that
     would otherwise leak into every occurrence cloned from it — or, worse,
     into every generated export:
@@ -165,11 +168,11 @@ def _clear_body(document: Document) -> None:
         document.part.drop_rel(r_id)
 
 
-def _append_element(document: Document, element) -> None:
+def _append_element(document: Document, element: BaseOxmlElement) -> None:
     document.element.body.find(qn("w:sectPr")).addprevious(element)
 
 
-def _clear_runs(paragraph_element) -> None:
+def _clear_runs(paragraph_element: BaseOxmlElement) -> None:
     """Removes a cloned paragraph's placeholder text (runs and hyperlinks)
     while keeping its pPr (spacing, indent, bullet numbering) intact."""
     for child in list(paragraph_element):
@@ -177,7 +180,7 @@ def _clear_runs(paragraph_element) -> None:
             paragraph_element.remove(child)
 
 
-def _set_run_text(run_element, text: str) -> None:
+def _set_run_text(run_element: BaseOxmlElement, text: str) -> None:
     t = run_element.find(qn("w:t"))
     if t is None:
         t = OxmlElement("w:t")
@@ -186,7 +189,7 @@ def _set_run_text(run_element, text: str) -> None:
     t.text = text
 
 
-def _set_run_color(run_element, hex_value: str) -> None:
+def _set_run_color(run_element: BaseOxmlElement, hex_value: str) -> None:
     rPr = run_element.find(qn("w:rPr"))
     if rPr is None:
         return
@@ -200,7 +203,7 @@ def _set_run_color(run_element, hex_value: str) -> None:
         del color_el.attrib[qn("w:themeColor")]
 
 
-def _set_bottom_border(paragraph_element, hex_value: str) -> None:
+def _set_bottom_border(paragraph_element: BaseOxmlElement, hex_value: str) -> None:
     """A thin rule under a section heading, colored to match its text —
     the divider line under "Profile & Career", "Skills", etc."""
     pPr = paragraph_element.find(qn("w:pPr"))
@@ -218,20 +221,20 @@ def _set_bottom_border(paragraph_element, hex_value: str) -> None:
     bottom = OxmlElement("w:bottom")
     bottom.set(qn("w:val"), "single")
     # Matches the thickness/spacing of the template's own (now-removed,
-    # fixed-color) divId-linked border — see _cloned_paragraph_without_div_id.
+    # fixed-color) divId-linked border — see _cloned_snippet.
     bottom.set(qn("w:sz"), "8")
     bottom.set(qn("w:space"), "3")
     bottom.set(qn("w:color"), hex_value.lstrip("#").upper())
     p_bdr.append(bottom)
 
 
-def _recolor_table_fill(table_element, hex_value: str) -> None:
+def _recolor_table_fill(table_element: BaseOxmlElement, hex_value: str) -> None:
     fill = hex_value.lstrip("#").upper()
     for shd in table_element.iter(qn("w:shd")):
         shd.set(qn("w:fill"), fill)
 
 
-def _text_run(paragraph_element):
+def _text_run(paragraph_element: BaseOxmlElement) -> BaseOxmlElement | None:
     """The first run that actually carries text — as opposed to, say, the
     picture template's name paragraph, whose *first* run anchors the
     headshot image and has no `w:t` of its own."""
@@ -273,14 +276,16 @@ def _crop_and_resize_picture(
 
         out_width = round(target_cx / 914400 * _PICTURE_EXPORT_DPI)
         out_height = round(target_cy / 914400 * _PICTURE_EXPORT_DPI)
-        image = image.resize((out_width, out_height), Image.LANCZOS)
+        image = image.resize((out_width, out_height), Image.Resampling.LANCZOS)
 
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         return buffer.getvalue()
 
 
-def _embed_picture(document: Document, table_element, data_url: str) -> None:
+def _embed_picture(
+    document: Document, table_element: BaseOxmlElement, data_url: str
+) -> None:
     drawing = next(table_element.iter(qn("w:drawing")))
     extent = next(drawing.iter(qn("wp:extent")))
     target_cx = int(extent.get("cx"))
@@ -309,7 +314,7 @@ def _run_properties(
     bold: bool = False,
     italic: bool = False,
     underline: bool = False,
-) -> object:
+) -> BaseOxmlElement:
     rPr = OxmlElement("w:rPr")
 
     if style.font:
@@ -341,7 +346,7 @@ def _new_run(
     bold: bool = False,
     italic: bool = False,
     underline: bool = False,
-) -> object:
+) -> BaseOxmlElement:
     run = OxmlElement("w:r")
     run.append(_run_properties(style, bold=bold, italic=italic, underline=underline))
 
@@ -352,7 +357,7 @@ def _new_run(
     return run
 
 
-def _new_line_break(style: _TextStyle) -> object:
+def _new_line_break(style: _TextStyle) -> BaseOxmlElement:
     run = OxmlElement("w:r")
     run.append(_run_properties(style))
     run.append(OxmlElement("w:br"))
@@ -367,7 +372,7 @@ def _new_hyperlink(
     *,
     bold: bool = False,
     italic: bool = False,
-) -> object:
+) -> BaseOxmlElement:
     """python-docx has no native hyperlink support; this builds the
     `w:hyperlink` element directly, the documented low-level approach.
 
@@ -388,7 +393,7 @@ def _new_hyperlink(
 
 def _append_segment(
     document: Document,
-    paragraph_element,
+    paragraph_element: BaseOxmlElement,
     segment: InlineSegment,
     style: _TextStyle,
 ) -> None:
@@ -440,12 +445,14 @@ def _render_entries(
     for entry in section.entries:
         if entry.heading:
             title_el = copy.deepcopy(snippets.job_title)
-            _set_run_text(title_el.find(qn("w:r")), entry.heading)
+            title_run = title_el.find(qn("w:r"))
+            _set_run_text(title_run, entry.heading)
             _append_element(document, title_el)
 
         if entry.dates:
             dates_el = copy.deepcopy(snippets.job_dates)
-            _set_run_text(dates_el.find(qn("w:r")), entry.dates)
+            dates_run = dates_el.find(qn("w:r"))
+            _set_run_text(dates_run, entry.dates)
             _append_element(document, dates_el)
 
         _render_markdown_lite(document, snippets, entry.body)
@@ -470,7 +477,8 @@ def _render_pairs(
 ) -> None:
     for pair in section.pairs:
         el = copy.deepcopy(snippets.body_paragraph)
-        _set_run_text(el.find(qn("w:r")), f"{pair.left}: {pair.right}")
+        run = el.find(qn("w:r"))
+        _set_run_text(run, f"{pair.left}: {pair.right}")
         _append_element(document, el)
 
 
@@ -489,7 +497,9 @@ def _render_section_body(
         _render_pairs(document, snippets, section)
 
 
-def _rebuild_contact_paragraph(paragraph_element, header: ProfileHeader) -> None:
+def _rebuild_contact_paragraph(
+    paragraph_element: BaseOxmlElement, header: ProfileHeader
+) -> None:
     """Matches the template's own contact line: email/phone on one line,
     then a real line break, then location on its own line below — not all
     three run together on one line separated by "|"."""
@@ -506,7 +516,9 @@ def _rebuild_contact_paragraph(paragraph_element, header: ProfileHeader) -> None
 
 
 def _rebuild_links_paragraph(
-    document: Document, paragraph_element, links: list
+    document: Document,
+    paragraph_element: BaseOxmlElement,
+    links: list[ProfileLink],
 ) -> None:
     _clear_runs(paragraph_element)
     for index, link in enumerate(links):
@@ -520,12 +532,16 @@ def _rebuild_links_paragraph(
 def _build_header(
     document: Document, snippets: _Snippets, header: ProfileHeader
 ) -> None:
-    has_picture = bool(header.picture)
-    if has_picture:
+    # Narrowing directly on `header.picture` (not through an intermediate
+    # bool) is what lets the type checker treat it as `str`, not `str |
+    # None`, inside this branch — see _embed_picture's data_url parameter.
+    if header.picture:
         table_el = copy.deepcopy(snippets.header_table_with_picture)
         _embed_picture(document, table_el, header.picture)
+        has_picture = True
     else:
         table_el = copy.deepcopy(snippets.header_table_no_picture)
+        has_picture = False
     _recolor_table_fill(table_el, header.primary_color)
 
     # The picture layout has a picture column before the text column; the
@@ -534,8 +550,10 @@ def _build_header(
     cell = cells[1] if has_picture else cells[0]
     cell_paragraphs = cell.findall(qn("w:p"))
 
-    _set_run_text(_text_run(cell_paragraphs[0]), header.full_name)
-    _set_run_text(_text_run(cell_paragraphs[1]), header.career_title)
+    name_run = _text_run(cell_paragraphs[0])
+    career_title_run = _text_run(cell_paragraphs[1])
+    _set_run_text(name_run, header.full_name)
+    _set_run_text(career_title_run, header.career_title)
     _rebuild_contact_paragraph(cell_paragraphs[2], header)
     _rebuild_links_paragraph(document, cell_paragraphs[3], header.links)
 
@@ -544,7 +562,7 @@ def _build_header(
 
 
 def build_resume_document(profile: Profile) -> Document:
-    document = Document(RESUME_TEMPLATE_PATH)
+    document = open_document(str(RESUME_TEMPLATE_PATH))
     snippets = _load_snippets(document)
     _clear_body(document)
 

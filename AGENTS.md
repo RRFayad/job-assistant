@@ -92,6 +92,7 @@ npx prettier --check <changed-files>
 # FastAPI
 uv run --project backend black --check backend
 uv run --project backend isort --check-only backend
+npx --yes pyright backend  # backend/pyrightconfig.json — production code should be clean
 ```
 
 ## Agent skills
