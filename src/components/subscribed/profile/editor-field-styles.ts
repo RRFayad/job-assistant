@@ -6,7 +6,7 @@ import { tw } from "@/lib/utils";
 // file's own local `styles` object rather than using these directly, per
 // AGENTS.md's "local styles object" convention.
 export const bareInputClass = tw(
-  "w-full border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm focus-visible:ring-0",
+  "w-full rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm focus-visible:ring-0",
 );
 
 export const iconButtonClass = tw(

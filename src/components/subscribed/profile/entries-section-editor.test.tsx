@@ -23,7 +23,13 @@ const section: EntriesSection = {
 describe("EntriesSectionEditor", () => {
   it("appends a blank entry when Add entry is clicked", () => {
     const onChange = vi.fn();
-    render(<EntriesSectionEditor section={section} onChange={onChange} />);
+    render(
+      <EntriesSectionEditor
+        section={section}
+        accentColor="#2f8f7a"
+        onChange={onChange}
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Add entry" }));
 
@@ -40,7 +46,13 @@ describe("EntriesSectionEditor", () => {
 
   it("updates only the edited entry's heading", () => {
     const onChange = vi.fn();
-    render(<EntriesSectionEditor section={section} onChange={onChange} />);
+    render(
+      <EntriesSectionEditor
+        section={section}
+        accentColor="#2f8f7a"
+        onChange={onChange}
+      />,
+    );
 
     const headingInputs = screen.getAllByLabelText("Entry heading");
     fireEvent.change(headingInputs[0], {
@@ -58,7 +70,13 @@ describe("EntriesSectionEditor", () => {
 
   it("removes an entry, preserving the order of the rest", () => {
     const onChange = vi.fn();
-    render(<EntriesSectionEditor section={section} onChange={onChange} />);
+    render(
+      <EntriesSectionEditor
+        section={section}
+        accentColor="#2f8f7a"
+        onChange={onChange}
+      />,
+    );
 
     const removeButtons = screen.getAllByRole("button", {
       name: "Remove entry",

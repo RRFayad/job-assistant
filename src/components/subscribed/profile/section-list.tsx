@@ -3,7 +3,6 @@
 import type { Dispatch } from "react";
 import { ListIcon, Rows3Icon, TagsIcon, TypeIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import type { ProfileSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
@@ -24,10 +23,18 @@ type SectionListProps = {
 
 const styles = {
   list: tw("space-y-4"),
-  addSectionBar: tw(
-    "flex flex-wrap items-center gap-2 rounded-xl border border-dashed p-4",
+  addSectionEyebrow: tw(
+    "mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase",
   ),
-  addSectionHint: tw("mr-1 text-sm text-muted-foreground"),
+  addSectionGrid: tw("flex flex-wrap gap-3"),
+  addSectionCard: tw(
+    "w-40 flex-1 cursor-pointer rounded-xl border bg-card p-4 text-left shadow-sm hover:border-primary/60",
+  ),
+  addSectionIcon: tw(
+    "mb-3 flex size-8.5 items-center justify-center rounded-[10px] bg-primary/10 text-primary",
+  ),
+  addSectionLabel: tw("text-sm font-semibold"),
+  addSectionHint: tw("mt-1 text-xs text-muted-foreground"),
 };
 
 // A plain array (matching the prototype's own sectionTypes list) rather than
@@ -38,13 +45,39 @@ const styles = {
 const SECTION_TYPES: {
   type: ProfileSection["type"];
   label: string;
+  hint: string;
   icon: typeof TypeIcon;
 }[] = [
-  { type: "text", label: "Text", icon: TypeIcon },
-  { type: "tags", label: "Tag groups", icon: TagsIcon },
-  { type: "entries", label: "Entries", icon: Rows3Icon },
-  { type: "list", label: "List", icon: ListIcon },
-  { type: "pairs", label: "Pairs", icon: Rows3Icon },
+  {
+    type: "text",
+    label: "Text",
+    hint: "A free-form paragraph, like a summary.",
+    icon: TypeIcon,
+  },
+  {
+    type: "entries",
+    label: "Entries",
+    hint: "Roles, degrees — heading, dates, body.",
+    icon: Rows3Icon,
+  },
+  {
+    type: "tags",
+    label: "Tag groups",
+    hint: "Skills, grouped into labeled rows.",
+    icon: TagsIcon,
+  },
+  {
+    type: "list",
+    label: "List",
+    hint: "A simple bullet-style list of items.",
+    icon: ListIcon,
+  },
+  {
+    type: "pairs",
+    label: "Pairs",
+    hint: "Label/value rows — languages, certs.",
+    icon: Rows3Icon,
+  },
 ];
 
 export const SectionList = ({
@@ -58,6 +91,7 @@ export const SectionList = ({
         <SectionShell
           key={section.id}
           title={section.title}
+          number={index + 1}
           accentColor={accentColor}
           canMoveUp={index > 0}
           canMoveDown={index < sections.length - 1}
@@ -109,6 +143,7 @@ export const SectionList = ({
           {section.type === "entries" && (
             <EntriesSectionEditor
               section={section}
+              accentColor={accentColor}
               onChange={(next) =>
                 dispatch({ type: "UPDATE_SECTION", section: next })
               }
@@ -141,20 +176,26 @@ export const SectionList = ({
         </SectionShell>
       ))}
 
-      <div className={styles.addSectionBar}>
-        <span className={styles.addSectionHint}>Add a section:</span>
-        {SECTION_TYPES.map(({ type, label, icon: Icon }) => (
-          <Button
-            key={type}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => dispatch({ type: "ADD_SECTION", sectionType: type })}
-          >
-            <Icon />
-            {label}
-          </Button>
-        ))}
+      <div>
+        <div className={styles.addSectionEyebrow}>Add a section</div>
+        <div className={styles.addSectionGrid}>
+          {SECTION_TYPES.map(({ type, label, hint, icon: Icon }) => (
+            <button
+              key={type}
+              type="button"
+              className={styles.addSectionCard}
+              onClick={() =>
+                dispatch({ type: "ADD_SECTION", sectionType: type })
+              }
+            >
+              <span className={styles.addSectionIcon}>
+                <Icon className="size-4" />
+              </span>
+              <div className={styles.addSectionLabel}>{label}</div>
+              <div className={styles.addSectionHint}>{hint}</div>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

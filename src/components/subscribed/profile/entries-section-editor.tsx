@@ -14,16 +14,20 @@ type Entry = EntriesSection["entries"][number];
 
 type EntriesSectionEditorProps = {
   section: EntriesSection;
+  accentColor: string;
   onChange: (section: EntriesSection) => void;
 };
 
 const styles = {
   entryBlock: tw("mt-4 space-y-2 border-l-2 pl-4 first:mt-0"),
   entryHeadRow: tw("flex items-start gap-2"),
-  bareInput: bareInputClass,
-  datesInput: tw(
-    "w-full border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm italic focus-visible:ring-0",
+  headingInput: tw(
+    "min-w-0 flex-1 rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm font-semibold focus-visible:ring-0",
   ),
+  datesInput: tw(
+    "w-full rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-xs text-muted-foreground italic focus-visible:ring-0",
+  ),
+  bareInput: bareInputClass,
   iconButton: iconButtonClass,
   addButton: tw("mt-3"),
 };
@@ -37,6 +41,7 @@ const createEntry = (): Entry => ({
 
 export const EntriesSectionEditor = ({
   section,
+  accentColor,
   onChange,
 }: EntriesSectionEditorProps) => {
   const updateEntry = (id: string, patch: Partial<Entry>) => {
@@ -62,11 +67,15 @@ export const EntriesSectionEditor = ({
   return (
     <>
       {section.entries.map((entry) => (
-        <div key={entry.id} className={styles.entryBlock}>
+        <div
+          key={entry.id}
+          className={styles.entryBlock}
+          style={{ borderColor: accentColor }}
+        >
           <div className={styles.entryHeadRow}>
             <Input
               aria-label="Entry heading"
-              className={styles.bareInput}
+              className={styles.headingInput}
               placeholder="Title, Company (descriptor), Location"
               value={entry.heading}
               onChange={(e) =>

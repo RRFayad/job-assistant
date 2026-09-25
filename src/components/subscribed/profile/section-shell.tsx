@@ -13,6 +13,7 @@ import { cn, tw } from "@/lib/utils";
 
 type SectionShellProps = {
   title: string;
+  number: number;
   accentColor: string;
   canMoveUp: boolean;
   canMoveDown: boolean;
@@ -26,21 +27,25 @@ type SectionShellProps = {
 
 const styles = {
   card: tw("rounded-xl border bg-card p-5 shadow-sm"),
-  accentStrip: tw("-mx-5 -mt-5 mb-4 h-2 rounded-t-xl"),
-  head: tw("flex items-center gap-2"),
+  head: tw("flex items-center gap-2.5"),
+  eyebrow: tw("shrink-0 text-xs font-bold tracking-wide uppercase"),
   titleInput: tw(
-    "w-full border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm font-semibold tracking-wide uppercase focus-visible:ring-0",
+    "w-full max-w-56 rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm font-semibold focus-visible:ring-0",
   ),
-  controls: tw("flex shrink-0 items-center gap-0.5 text-muted-foreground"),
+  controls: tw(
+    "ml-auto flex shrink-0 items-center gap-0.5 text-muted-foreground",
+  ),
   iconButton: tw(
     "flex size-7 cursor-pointer items-center justify-center rounded-md hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-30",
   ),
   iconButtonActive: tw("bg-muted text-foreground"),
-  body: tw("mt-4"),
+  divider: tw("mt-3.5 mb-1 h-px bg-border"),
+  body: tw("mt-3"),
 };
 
 export const SectionShell = ({
   title,
+  number,
   accentColor,
   canMoveUp,
   canMoveDown,
@@ -55,13 +60,13 @@ export const SectionShell = ({
 
   return (
     <div className={styles.card}>
-      <div
-        className={styles.accentStrip}
-        style={{ backgroundColor: accentColor }}
-      />
       <div className={styles.head}>
+        <span className={styles.eyebrow} style={{ color: accentColor }}>
+          {String(number).padStart(2, "0")}
+        </span>
         <Input
           className={styles.titleInput}
+          style={{ color: accentColor }}
           value={title}
           onChange={(e) => onRename(e.target.value)}
           aria-label="Section title"
@@ -107,6 +112,7 @@ export const SectionShell = ({
           </button>
         </div>
       </div>
+      <div className={styles.divider} />
 
       {askAiOpen && renderAiPanel({ onClose: () => setAskAiOpen(false) })}
 
