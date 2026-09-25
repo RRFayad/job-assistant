@@ -4,7 +4,7 @@ import { Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { EntriesSection } from "@/lib/backend/profile";
+import type { EntriesSection } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import {

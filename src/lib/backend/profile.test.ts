@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { Profile } from "@/types/profile";
+
 import { fetchBackendData, saveBackendData } from "./client";
-import { fetchProfiles, saveProfile, type Profile } from "./profile";
+import { fetchProfiles, saveProfile } from "./profile";
 
 vi.mock("./client", () => ({
   fetchBackendData: vi.fn(),

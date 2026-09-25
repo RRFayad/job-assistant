@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/subscribed/page-header";
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import { ProfileHeaderForm } from "./profile-header-form";

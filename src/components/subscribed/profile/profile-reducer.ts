@@ -1,8 +1,4 @@
-import type {
-  Profile,
-  ProfileHeader,
-  ProfileSection,
-} from "@/lib/backend/profile";
+import type { Profile, ProfileHeader, ProfileSection } from "@/types/profile";
 
 export type ProfileAction =
   | { type: "UPDATE_HEADER"; header: ProfileHeader }

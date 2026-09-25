@@ -15,7 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 import { cn, tw } from "@/lib/utils";
 
 type ProfileSwitcherProps = {

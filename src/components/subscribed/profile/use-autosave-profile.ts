@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { saveProfile, type Profile } from "@/lib/backend/profile";
+import { saveProfile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 const SAVE_DELAY_MS = 2000;
 

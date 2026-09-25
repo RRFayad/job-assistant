@@ -3,7 +3,7 @@
 import type { Dispatch } from "react";
 import { ListIcon, Rows3Icon, TagsIcon, TypeIcon } from "lucide-react";
 
-import type { ProfileSection } from "@/lib/backend/profile";
+import type { ProfileSection } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import { AskAiPanel } from "./ask-ai-panel";

@@ -4,7 +4,7 @@ import { CheckIcon, Loader2Icon } from "lucide-react";
 import type { Dispatch } from "react";
 
 import { PageHeader } from "@/components/subscribed/page-header";
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import { ExportPdfButton } from "./export-pdf-button";

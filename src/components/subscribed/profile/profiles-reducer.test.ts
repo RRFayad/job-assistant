@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 import { profilesReducer, type ProfilesState } from "./profiles-reducer";
 

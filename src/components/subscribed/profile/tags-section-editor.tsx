@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { TagsSection } from "@/lib/backend/profile";
+import type { TagsSection } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import { bareInputClass, iconButtonClass } from "./editor-field-styles";

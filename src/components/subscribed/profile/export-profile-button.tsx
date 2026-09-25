@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 import { parseContentDispositionFilename } from "@/lib/utils";
 
 type ExportProfileButtonProps = {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { TagsSection } from "@/lib/backend/profile";
+import type { TagsSection } from "@/types/profile";
 
 import { TagsSectionEditor } from "./tags-section-editor";
 

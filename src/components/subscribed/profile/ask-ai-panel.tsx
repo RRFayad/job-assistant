@@ -4,11 +4,9 @@ import { CheckIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  fetchProfileSuggestion,
-  type SuggestionTarget,
-} from "@/lib/backend/profile";
+import { fetchProfileSuggestion } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
+import type { SuggestionTarget } from "@/types/profile";
 
 import { renderMarkdownLite } from "./markdown-lite";
 

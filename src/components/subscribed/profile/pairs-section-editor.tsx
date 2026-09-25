@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { PairsSection } from "@/lib/backend/profile";
+import type { PairsSection } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import { bareInputClass, iconButtonClass } from "./editor-field-styles";

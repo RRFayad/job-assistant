@@ -4,7 +4,7 @@ import { XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import type { ListSection } from "@/lib/backend/profile";
+import type { ListSection } from "@/types/profile";
 import { tw } from "@/lib/utils";
 
 import { iconButtonClass } from "./editor-field-styles";

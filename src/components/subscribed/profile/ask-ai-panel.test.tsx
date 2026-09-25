@@ -3,7 +3,7 @@ import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { fetchProfileSuggestion } from "@/lib/backend/profile";
-import type { SuggestionTarget } from "@/lib/backend/profile";
+import type { SuggestionTarget } from "@/types/profile";
 
 import { AskAiPanel } from "./ask-ai-panel";
 

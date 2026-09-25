@@ -3,7 +3,8 @@ import { StrictMode } from "react";
 import { toast } from "sonner";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { saveProfile, type Profile } from "@/lib/backend/profile";
+import { saveProfile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 import { useAutosaveProfile } from "./use-autosave-profile";
 

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { exportProfileDocx, type Profile } from "@/lib/backend/profile";
+import { exportProfileDocx } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 export const POST = async (request: NextRequest) => {
   let profile: Profile;

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ListSection } from "@/lib/backend/profile";
+import type { ListSection } from "@/types/profile";
 
 import { ListSectionEditor } from "./list-section-editor";
 

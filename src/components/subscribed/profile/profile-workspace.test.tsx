@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { toast } from "sonner";
 import { describe, expect, it, vi } from "vitest";
 
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 import { ProfileWorkspace } from "./profile-workspace";
 

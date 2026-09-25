@@ -1,4 +1,4 @@
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 import { profileReducer, type ProfileAction } from "./profile-reducer";
 

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { PairsSection } from "@/lib/backend/profile";
+import type { PairsSection } from "@/types/profile";
 
 import { PairsSectionEditor } from "./pairs-section-editor";
 

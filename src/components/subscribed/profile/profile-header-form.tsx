@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { ProfileHeader, ProfileLink } from "@/lib/backend/profile";
+import type { ProfileHeader, ProfileLink } from "@/types/profile";
 import { cn, tw } from "@/lib/utils";
 
 import { AskAiPanel } from "./ask-ai-panel";

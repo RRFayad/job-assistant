@@ -3,7 +3,7 @@
 import { useReducer, useState } from "react";
 import { toast } from "sonner";
 
-import type { Profile } from "@/lib/backend/profile";
+import type { Profile } from "@/types/profile";
 
 import { ProfileEditor } from "./profile-editor";
 import { ProfileEntryScreen } from "./profile-entry-screen";
