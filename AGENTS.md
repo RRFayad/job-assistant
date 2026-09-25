@@ -18,6 +18,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Do not create branches, stage files, or commit unless explicitly requested.
 - Inspect the existing implementation before changing code. Preserve established
   naming, structure, and patterns when they are already clear.
+- Before building a UI feature, check whether it was already prototyped on a
+  `prototype/*` branch. The prototype is this project's design definition for
+  now (no formal design system exists yet) — match its visual details (layout,
+  spacing, colors, copy, interaction patterns), not a fresh default styling
+  pass against shadcn/ui defaults. If no prototype exists for the feature,
+  say so before implementing, since styling may need a dedicated pass.
 
 ## Architecture Boundaries
 
@@ -86,6 +92,7 @@ npx prettier --check <changed-files>
 # FastAPI
 uv run --project backend black --check backend
 uv run --project backend isort --check-only backend
+npx --yes pyright backend  # backend/pyrightconfig.json — production code should be clean
 ```
 
 ## Agent skills

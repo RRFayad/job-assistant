@@ -220,3 +220,8 @@ __marimo__/
 
 
 .env*
+
+# Developer-local seed data for GET /profile/ (e.g. a real resume, used to
+# visually compare the real implementation against a prototype) — never
+# committed; the app falls back to an empty Profile list without it.
+dev_seed_profiles.json
