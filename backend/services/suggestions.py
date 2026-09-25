@@ -21,6 +21,7 @@ from schemas.profile import (
 
 
 def _suggest_header(header: ProfileHeader) -> ProfileHeader:
+    # TODO: replace with a real AI-generated suggestion.
     return header.model_copy(
         update={"career_title": f"{header.career_title} — results-driven professional"}
     )
@@ -33,12 +34,14 @@ def suggest(target: SuggestionTarget) -> SuggestionTarget:
     section = target.section
 
     if isinstance(section, TextSection):
+        # TODO: replace with a real AI-generated suggestion.
         suggested = section.model_copy(
             update={
                 "body": f"{section.body} This work consistently delivered measurable impact."
             }
         )
     elif isinstance(section, EntriesSection):
+        # TODO: replace with a real AI-generated suggestion.
         if not section.entries:
             suggested = section
         else:
@@ -49,10 +52,12 @@ def suggest(target: SuggestionTarget) -> SuggestionTarget:
             )
             suggested = section.model_copy(update={"entries": updated})
     elif isinstance(section, ListSection):
+        # TODO: replace with a real AI-generated suggestion.
         suggested = section.model_copy(
             update={"items": [*section.items, "AI-suggested addition"]}
         )
     elif isinstance(section, TagsSection):
+        # TODO: replace with a real AI-generated suggestion.
         if not section.categories:
             suggested = section
         else:
@@ -63,6 +68,7 @@ def suggest(target: SuggestionTarget) -> SuggestionTarget:
             )
             suggested = section.model_copy(update={"categories": categories})
     else:
+        # TODO: replace with a real AI-generated suggestion.
         suggested = section.model_copy(
             update={
                 "pairs": [

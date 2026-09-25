@@ -30,9 +30,9 @@ _UNSAFE_FILENAME_CHARS = re.compile(r'[\\/:*?"<>|]')
 
 
 def _build_export_filename(profile: Profile) -> str:
-    # A recruiter-friendly name, e.g. "Jane-Doe_Frontend-Engineer_CV.docx" —
-    # legible at a glance in a downloads folder or an inbox attachment list,
-    # rather than a bare name or a generic "resume.docx".
+    """A recruiter-friendly name, e.g. "Jane-Doe_Frontend-Engineer_CV.docx" —
+    legible at a glance in a downloads folder or an inbox attachment list,
+    rather than a bare name or a generic "resume.docx"."""
     name_part = "-".join(profile.header.full_name.split())
     profile_part = "-".join(profile.name.split())
 
@@ -44,10 +44,10 @@ def _build_export_filename(profile: Profile) -> str:
 
 
 def _content_disposition(filename: str) -> str:
-    # A non-Latin-1 filename crashes ASGI's header encoding outright, so the
-    # plain `filename=` parameter always gets an ASCII-safe fallback; the
-    # RFC 6266 `filename*=` parameter carries the real name for the (near-
-    # universal) clients that support it.
+    """A non-Latin-1 filename crashes ASGI's header encoding outright, so the
+    plain `filename=` parameter always gets an ASCII-safe fallback; the
+    RFC 6266 `filename*=` parameter carries the real name for the (near-
+    universal) clients that support it."""
     ascii_filename = filename.encode("ascii", "replace").decode("ascii")
     return (
         f'attachment; filename="{ascii_filename}"; '
