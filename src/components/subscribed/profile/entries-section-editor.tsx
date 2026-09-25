@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import type { EntriesSection } from "@/lib/backend/profile";
 import { tw } from "@/lib/utils";
 
-import { bareInputClass, iconButtonClass } from "./editor-field-styles";
+import {
+  bareInputClass,
+  iconButtonClass,
+  underlineFieldClass,
+} from "./editor-field-styles";
 import { RichTextField } from "./rich-text-field";
 
 type Entry = EntriesSection["entries"][number];
@@ -22,10 +26,10 @@ const styles = {
   entryBlock: tw("mt-4 space-y-2 border-l-2 pl-4 first:mt-0"),
   entryHeadRow: tw("flex items-start gap-2"),
   headingInput: tw(
-    "min-w-0 flex-1 rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm font-semibold focus-visible:ring-0",
+    `min-w-0 flex-1 ${underlineFieldClass} pr-0 pl-1 text-sm font-semibold`,
   ),
   datesInput: tw(
-    "w-full rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-xs text-muted-foreground italic focus-visible:ring-0",
+    `w-full ${underlineFieldClass} pr-0 pl-1 text-xs text-muted-foreground italic`,
   ),
   bareInput: bareInputClass,
   iconButton: iconButtonClass,

@@ -11,6 +11,8 @@ import { useState, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { cn, tw } from "@/lib/utils";
 
+import { underlineFieldClass } from "./editor-field-styles";
+
 type SectionShellProps = {
   title: string;
   number: number;
@@ -30,7 +32,7 @@ const styles = {
   head: tw("flex items-center gap-2.5"),
   eyebrow: tw("shrink-0 text-xs font-bold tracking-wide uppercase"),
   titleInput: tw(
-    "w-full max-w-56 rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm font-semibold focus-visible:ring-0",
+    `w-full max-w-56 ${underlineFieldClass} pr-0 pl-1 text-sm font-semibold`,
   ),
   controls: tw(
     "ml-auto flex shrink-0 items-center gap-0.5 text-muted-foreground",

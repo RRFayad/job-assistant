@@ -28,7 +28,7 @@ const styles = {
   ),
   addSectionGrid: tw("flex flex-wrap gap-3"),
   addSectionCard: tw(
-    "w-40 flex-1 cursor-pointer rounded-xl border bg-card p-4 text-left shadow-sm hover:border-primary/60",
+    "w-40 flex-1 cursor-pointer rounded-xl border bg-card p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md",
   ),
   addSectionIcon: tw(
     "mb-3 flex size-8.5 items-center justify-center rounded-[10px] bg-primary/10 text-primary",

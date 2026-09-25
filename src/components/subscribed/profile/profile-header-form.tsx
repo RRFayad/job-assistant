@@ -19,7 +19,11 @@ import type { ProfileHeader, ProfileLink } from "@/lib/backend/profile";
 import { cn, tw } from "@/lib/utils";
 
 import { AskAiPanel } from "./ask-ai-panel";
-import { bareInputClass, iconButtonClass } from "./editor-field-styles";
+import {
+  bareInputClass,
+  iconButtonClass,
+  underlineFieldClass,
+} from "./editor-field-styles";
 import {
   MAX_PICTURE_UPLOAD_BYTES,
   readAndResizePicture,
@@ -80,11 +84,9 @@ const styles = {
   ),
   hiddenInput: tw("hidden"),
   identity: tw("mt-3.5"),
-  nameInput: tw(
-    "w-full rounded-none border-0 border-b bg-transparent px-0 py-1 text-2xl font-medium focus-visible:ring-0",
-  ),
+  nameInput: tw(`w-full ${underlineFieldClass} px-0 text-2xl font-medium`),
   titleInput: tw(
-    "mt-0.5 w-full rounded-none border-0 border-b bg-transparent px-0 py-1 text-sm text-muted-foreground focus-visible:ring-0",
+    `mt-0.5 w-full ${underlineFieldClass} px-0 text-sm text-muted-foreground`,
   ),
   contactRow: tw("mt-3.5 flex flex-wrap items-center gap-x-5 gap-y-1"),
   contactField: tw("flex items-center gap-1.5 text-muted-foreground"),
@@ -97,9 +99,7 @@ const styles = {
   linksBlock: tw("mt-3.5 space-y-2"),
   linksLabel: tw("text-xs font-medium text-muted-foreground"),
   linkRow: tw("flex items-center gap-2"),
-  linkLabelInput: tw(
-    "w-32 shrink-0 rounded-none border-0 border-b bg-transparent py-1 pr-0 pl-1 text-sm focus-visible:ring-0",
-  ),
+  linkLabelInput: tw(`w-32 shrink-0 ${underlineFieldClass} pr-0 pl-1 text-sm`),
   bareInput: bareInputClass,
   iconButton: iconButtonClass,
 };
