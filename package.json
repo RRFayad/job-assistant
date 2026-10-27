@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "check": "npm run lint && npx tsc --noEmit && npm run typecheck --workspaces --if-present && npm test",
     "db:generate": "npm run db:generate -w @app/shared",
     "db:migrate": "npm run db:migrate -w @app/shared"
   },
