@@ -1,9 +1,9 @@
 import "server-only";
 
 import Stripe from "stripe";
-import type { User } from "@/types/database";
 import { getEnvVar, getErrorMessageAndThrow } from "../utils";
 import { addStripeCustomerIdToUserDb } from "../user/user";
+import type { User } from "@app/shared/db/schema";
 
 const stripeSecretKey = getEnvVar("STRIPE_SECRET_KEY");
 const stripeDiscountCoupon = getEnvVar("STRIPE_DEMO_COUPON_ID", false);

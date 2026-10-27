@@ -5,8 +5,8 @@ import { AppHeader } from "@/components/subscribed/app-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { siteConfig } from "@/lib/site-config";
 import { requireCurrentUserSubscriptionPlan } from "@/lib/subscription/subscription";
-import { SubscriptionPlan } from "@/types/database";
 import { tw } from "@/lib/utils";
+import { SubscriptionPlan } from "@app/shared/types";
 
 type SubscribedLayoutProps = {
   children: ReactNode;

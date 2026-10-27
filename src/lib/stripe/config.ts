@@ -1,6 +1,5 @@
-import type { SubscriptionPlan } from "@/types/database";
-
 import { getEnvVar } from "@/lib/utils";
+import type { SubscriptionPlan } from "@app/shared/types";
 
 export const stripePriceIds = {
   basic: getEnvVar("STRIPE_BASIC_PRICE_ID", false),
