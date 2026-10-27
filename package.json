@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "backend"
   ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n web,api -c blue,green \"next dev\" \"npm run dev -w @app/backend\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -44,6 +45,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.2.0",
+    "concurrently": "^10.0.6",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",

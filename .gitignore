@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -19,6 +19,16 @@
 
 # production
 /build
+
+# workspace build output (backend)
+dist/
+backend/server.js
+backend/server.js.map
+
+# Developer-local seed data for GET /profile/ (e.g. a real resume, used to
+# visually compare the real implementation against a prototype) — never
+# committed; the app falls back to an empty Profile list without it.
+backend/dev_seed_profiles.json
 
 # misc
 .DS_Store
