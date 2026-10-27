@@ -4,17 +4,9 @@ from docx import Document
 from fastapi.testclient import TestClient
 
 import main
-from auth.auth import get_current_user
-from auth.subscription import require_subscription_plan
-from db.models import SubscriptionPlan, User
-
-fake_user = User(id=1, clerk_id="test", email="test@example.com", role="user")
-main.app.dependency_overrides[get_current_user] = lambda: fake_user
-main.app.dependency_overrides[require_subscription_plan(SubscriptionPlan.BASIC)] = (
-    lambda: None
-)
 
 client = TestClient(main.app)
+_auth_headers = {"X-Internal-Api-Key": main._internal_api_key}
 
 
 def _profile_payload() -> dict:
@@ -43,7 +35,7 @@ def _profile_payload() -> dict:
 
 
 def test_export_returns_a_valid_docx_with_the_profile_content() -> None:
-    response = client.post("/profile/export", json=_profile_payload())
+    response = client.post("/export", json=_profile_payload(), headers=_auth_headers)
 
     assert response.status_code == 200
     assert "wordprocessingml" in response.headers["content-type"]
@@ -53,3 +45,9 @@ def test_export_returns_a_valid_docx_with_the_profile_content() -> None:
     header_texts = [p.text for p in document.tables[0].rows[0].cells[-1].paragraphs]
     assert "Jane Doe" in header_texts
     assert any(p.text == "Summary" for p in document.paragraphs)
+
+
+def test_export_rejects_a_request_without_the_internal_api_key() -> None:
+    response = client.post("/export", json=_profile_payload())
+
+    assert response.status_code == 401

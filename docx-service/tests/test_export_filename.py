@@ -1,4 +1,4 @@
-from routers.profile import _build_export_filename, _content_disposition
+from main import _build_export_filename, _content_disposition
 from schemas.profile import Profile, ProfileHeader
 
 
