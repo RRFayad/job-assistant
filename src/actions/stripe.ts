@@ -4,7 +4,6 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { stripePriceIds } from "@/lib/stripe/config";
-import { subscriptionPlan } from "@/lib/db/schema";
 import {
   createStripeCheckoutSession,
   createStripeCustomerPortalSession,
@@ -16,7 +15,8 @@ import {
   isSubscriptionActive,
 } from "@/lib/subscription/subscription";
 import { getEnvVar } from "@/lib/utils";
-import type { SubscriptionPlan } from "@/types/database";
+import { subscriptionPlan } from "@app/shared/db/schema";
+import type { SubscriptionPlan } from "@app/shared/types";
 
 const isSubscriptionPlan = (value: string): value is SubscriptionPlan => {
   return subscriptionPlan.enumValues.includes(value as SubscriptionPlan);

@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
 import { deleteStripeCustomer, updateStripeCustomerEmail } from "@/lib/stripe";
 import { getUserByClerkId } from "@/lib/user/user";
 import { NextRequest } from "next/server";
 import { verifyWebhook } from "@clerk/nextjs/webhooks";
+import { users } from "@app/shared/db/schema";
 import { eq } from "drizzle-orm";
 import type { DeletedObjectJSON, UserJSON } from "@clerk/nextjs/server";
 

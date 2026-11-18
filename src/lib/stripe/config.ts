@@ -1,6 +1,5 @@
-import type { SubscriptionPlan } from "@/types/database";
-
 import { getEnvVar } from "@/lib/utils";
+import type { SubscriptionPlan } from "@app/shared/types";
 
 export const stripePriceIds = {
   basic: getEnvVar("STRIPE_BASIC_PRICE_ID", false),
@@ -45,7 +44,7 @@ const stripePlanDetails: Record<SubscriptionPlan, StripePlanDetails> = {
     features: [
       "Everything in Basic",
       "Subscription-based authorization",
-      "FastAPI product backend",
+      "Fastify product backend",
       "Advanced features",
       "Priority support",
     ],
@@ -58,7 +57,7 @@ const stripePlanDetails: Record<SubscriptionPlan, StripePlanDetails> = {
     interval: "per month",
     features: [
       "Everything in Premium",
-      "AI-ready Python architecture",
+      "AI-ready backend architecture",
       "Priority starter-kit updates",
       "All product features",
       "Premium support",

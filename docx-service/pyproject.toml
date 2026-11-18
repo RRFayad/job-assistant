@@ -1,0 +1,27 @@
+[project]
+name = "docx-service"
+version = "0.1.0"
+description = "Sidecar service: Profile JSON in, a .docx export out. Auth and persistence live in the Fastify backend (../backend); this has neither."
+requires-python = ">=3.14"
+dependencies = [
+    "black>=26.5.1",
+    "fastapi[standard]>=0.141.1",
+    "isort>=9.0.1",
+    "pillow>=12.3.0",
+    "python-docx>=1.2.0",
+    "python-dotenv>=1.2.3",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.fastapi]
+entrypoint = "main:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

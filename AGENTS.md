@@ -29,22 +29,30 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Next.js owns UI, Clerk authentication, Clerk and Stripe webhooks, billing,
   and SaaS/account concerns.
-- FastAPI owns product/domain APIs and future Python-based product logic, such
-  as AI, RAG, agents, and streaming.
+- `backend/` (Fastify, TypeScript) owns product/domain APIs and product
+  logic — AI, RAG, agents, streaming, and real persistence, as those get
+  built.
+- `docx-service/` is a narrow Python sidecar with exactly one job: Profile
+  JSON in, a `.docx` export out. It exists because `python-docx`'s
+  template-cloning OOXML manipulation (see ADR-0009) has no equivalent
+  Node library — it is not a place for new product logic, persistence, or
+  auth of its own. `backend/` calls it server-to-server with a shared
+  `X-Internal-Api-Key` header; it has no other access control.
 - PostgreSQL is the shared application database. Supabase, when used, is only
   the database host. Do not introduce Supabase Auth or the Supabase SDK.
-- Drizzle owns the schema and migrations in `src/lib/db/`. SQLAlchemy models in
-  `backend/db/models.py` map to the same database. Do not use SQLAlchemy
-  `create_all()`.
-- FastAPI must derive identity from the verified Clerk JWT. Never trust a
-  browser-supplied user ID for authenticated identity.
+- Drizzle owns the schema and migrations in `packages/shared/src/db/`,
+  imported as `@app/shared/db/schema` by both the Next.js app and
+  `backend/`. `docx-service/` has no database access at all.
+- `backend/` must derive identity from the verified Clerk JWT (via
+  `@clerk/fastify`). Never trust a browser-supplied user ID for
+  authenticated identity.
 
 ## Frontend Conventions
 
 - Use TypeScript arrow functions, not function declarations.
 - Prefer Server Components. Add client components only when client-side
   behavior is necessary.
-- Keep Next.js to FastAPI calls under `src/lib/backend/`.
+- Keep Next.js to `backend/` calls under `src/lib/backend/`.
 - Application-owned Tailwind styles belong in a local `styles` object and must
   be wrapped with `tw()` so Prettier sorts the classes.
 - Use `cn()` only for runtime conditional class merging.
@@ -61,38 +69,48 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   `subscriptions`; authorization reads local subscription state rather than
   querying Stripe on every request.
 - Server-side Next.js pages use the subscription helpers in
-  `src/lib/subscription/`. FastAPI routes use
-  `require_subscription_plan(...)` dependencies.
+  `src/lib/subscription/`. `backend/` routes use
+  `requireSubscriptionPlan(...)` preHandler hooks.
 - Keep Stripe SDK use, customer creation, Checkout Session creation, and
   Customer Portal Session creation server-only.
 
 ## Backend Conventions
 
-- Python dependencies and tooling are managed with `uv` in `backend/`.
-- `backend/` is an independently deployed Vercel project root. Import backend
-  modules from that root, such as `from auth.auth import ...`; do not import
-  them through `backend.*` or use relative imports that escape a subpackage.
-- Start FastAPI from `backend/` with
-  `uv run uvicorn main:app --reload --env-file .env`.
-- Format Python with Black and sort imports with isort.
-- Place product API routes in `backend/routers/`; keep authentication and
-  subscription dependencies under `backend/auth/`.
+- `backend/`, `packages/shared/`, and the root Next.js app are npm workspaces
+  (see root `package.json`'s `workspaces`). `@app/shared` holds the Drizzle
+  schema (`db/schema.ts`), the Zod API-contract schemas (`schemas.ts`,
+  shared by `backend/` and the frontend instead of each side keeping its own
+  copy), domain constants, and small cross-cutting utils — add a new shared
+  type or schema there, not inline in `backend/` or `src/`.
+- Place product routes in `backend/src/<domain>/<domain>.route.ts` (the
+  Fastify route + Zod request/response schema, via
+  `fastify-type-provider-zod`) and `<domain>.controller.ts` (the handler);
+  keep authentication and subscription preHandlers under `backend/src/auth/`.
+- Start the Fastify backend from the repo root with
+  `npm run dev -w @app/backend`, or run both it and Next.js together via the
+  root `npm run dev`.
 - CORS accepts only `FRONTEND_URL`; keep it aligned with the Next.js app URL.
+- `docx-service/` is a separate Python project (its own `pyproject.toml`,
+  managed with `uv`), not an npm workspace member. Start it from
+  `docx-service/` with `uv run uvicorn main:app --reload --env-file .env`.
+  Format its Python with Black and sort imports with isort. Keep it to
+  exactly its one job (see Architecture Boundaries) — a new product
+  endpoint belongs in `backend/`, not here.
 
 ## Validation
 
 Run relevant checks after changes:
 
 ```bash
-# Next.js
-npm run lint
-npx tsc --noEmit
+# Next.js + backend (npm workspaces) — or run each piece individually:
+# npm run lint / npx tsc --noEmit / npm run typecheck --workspaces --if-present / npm test
+npm run check
 npx prettier --check <changed-files>
 
-# FastAPI
-uv run --project backend black --check backend
-uv run --project backend isort --check-only backend
-npx --yes pyright backend  # backend/pyrightconfig.json — production code should be clean
+# docx-service (the Python sidecar)
+uv run --project docx-service black --check docx-service
+uv run --project docx-service isort --check-only docx-service
+npx --yes pyright docx-service  # docx-service/pyrightconfig.json — production code should be clean
 ```
 
 ## Agent skills

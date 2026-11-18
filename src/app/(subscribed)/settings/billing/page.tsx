@@ -3,8 +3,8 @@ import {
   getCurrentUserSubscription,
   requireCurrentUserSubscriptionPlan,
 } from "@/lib/subscription/subscription";
-import { SubscriptionPlan } from "@/types/database";
 import { tw } from "@/lib/utils";
+import { SubscriptionPlan } from "@app/shared/types";
 
 const styles = {
   page: tw("w-full"),
