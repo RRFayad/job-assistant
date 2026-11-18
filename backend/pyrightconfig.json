@@ -1,9 +1,0 @@
-{
-  "include": ["."],
-  "exclude": ["**/__pycache__", ".venv"],
-  "venvPath": ".",
-  "venv": ".venv",
-  "typeCheckingMode": "basic",
-  "reportMissingImports": true,
-  "pythonVersion": "3.14"
-}

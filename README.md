@@ -12,11 +12,12 @@ Python-first AI applications.
 - Clerk authentication and user lifecycle synchronization
 - PostgreSQL persistence with Drizzle ORM and versioned migrations
 - Stripe Checkout, Customer Portal, and subscription webhooks
-- Server-side subscription authorization in Next.js and FastAPI
-- A FastAPI backend protected by Clerk JWTs
+- Server-side subscription authorization in Next.js and the product backend
+- A Fastify backend protected by Clerk JWTs, with Zod request/response
+  schemas shared between the backend and the frontend
 - A responsive landing page, pricing flow, authenticated app shell, billing,
   and account pages
-- A protected dashboard request that demonstrates the Next.js to FastAPI
+- A protected dashboard request that demonstrates the Next.js to Fastify
   boundary end to end
 
 ## Architecture
@@ -30,10 +31,16 @@ Python-first AI applications.
 | Authentication  | Clerk                                          |
 | Database        | PostgreSQL, Drizzle ORM, postgres.js           |
 | Billing         | Stripe Checkout, Customer Portal, and webhooks |
-| Product backend | FastAPI, SQLAlchemy, Python managed with uv    |
+| Product backend | Fastify, Zod, TypeScript — an npm workspace    |
 
 Supabase is optional PostgreSQL hosting. Any PostgreSQL provider works; this
 starter does not use Supabase Auth, Storage, or the Supabase SDK.
+
+This repo is an npm workspace monorepo: the Next.js app at the root,
+`backend/` (the Fastify API), and `packages/shared/` (the Drizzle schema,
+Zod API-contract schemas, and small cross-cutting utils both sides import as
+`@app/shared/*`) are all workspace members, so a type or schema defined once
+is used by both sides instead of hand-syncing two copies.
 
 ### Responsibilities
 
@@ -46,11 +53,11 @@ Next.js
   - Stripe Checkout and Customer Portal
   - Payments, subscriptions, and server-side subscription page guards
 
-FastAPI
+Fastify (backend/)
   - Product and domain APIs
   - Clerk JWT validation
   - Read-only application user and subscription lookup for API authorization
-  - Future Python/AI logic
+  - Future product/AI logic
 
 PostgreSQL
   - Application users
@@ -58,10 +65,10 @@ PostgreSQL
 ```
 
 Next.js is the **SaaS service layer**: it owns user synchronization, billing,
-subscription state, and account-facing behavior. FastAPI is the **product
-layer**: it does not create, update, or delete users or payments. It reads the
-existing user and subscription records only after validating a Clerk token, so
-it can authorize product API requests.
+subscription state, and account-facing behavior. The Fastify backend is the
+**product layer**: it does not create, update, or delete users or payments.
+It reads the existing user and subscription records only after validating a
+Clerk token, so it can authorize product API requests.
 
 ### Identity and API Flow
 
@@ -69,16 +76,17 @@ it can authorize product API requests.
 Browser
   -> Next.js Server Component / Server Action
   -> Clerk session token
-  -> FastAPI Authorization header
-  -> Clerk JWKS validation
+  -> Fastify Authorization header
+  -> Clerk token verification (@clerk/fastify)
   -> PostgreSQL user lookup by clerk_id
   -> Subscription-plan authorization
-  -> Protected FastAPI response
+  -> Protected Fastify response
   -> Next.js renders the result
 ```
 
-The browser never supplies a trusted user ID to FastAPI. FastAPI derives the
-Clerk user ID from the verified token and reads the application user itself.
+The browser never supplies a trusted user ID to the backend. Fastify derives
+the Clerk user ID from the verified token and reads the application user
+itself.
 
 ### Billing Flow
 
@@ -88,7 +96,7 @@ User selects a plan
   -> Stripe Checkout
   -> Stripe subscription webhook
   -> PostgreSQL subscriptions table
-  -> Next.js and FastAPI authorize from local subscription state
+  -> Next.js and the Fastify backend authorize from local subscription state
 ```
 
 Stripe is the billing source of truth. PostgreSQL stores current subscription
@@ -97,9 +105,10 @@ overwriting newer data.
 
 ### Database Ownership
 
-Drizzle owns the PostgreSQL schema and migrations in `src/lib/db/`.
-SQLAlchemy models in `backend/db/models.py` map to that same schema so FastAPI
-can query it. Do not use SQLAlchemy `create_all()` for this project.
+Drizzle owns the PostgreSQL schema and migrations in
+`packages/shared/src/db/`, imported as `@app/shared/db/schema` by both the
+Next.js app and the Fastify backend — one schema, not two hand-synced
+copies.
 
 The starter includes:
 
@@ -180,17 +189,24 @@ src/
     ui/                    shadcn/ui primitives
     velora/                Velora UI primitives
   lib/
-    backend/               Typed Next.js to FastAPI client functions
-    db/                    Drizzle client, schema, and migrations
+    backend/               Typed Next.js to Fastify client functions
+    db/                    Drizzle client (schema lives in packages/shared)
     stripe/                Stripe SDK and webhook handling
     subscription/          Next.js subscription authorization helpers
     user/                  Application user queries
 
-backend/
-  auth/                    Clerk JWT and plan authorization dependencies
-  db/                      SQLAlchemy connection and schema mappings
-  routers/                 Product/domain API routes
-  main.py                  FastAPI application and CORS setup
+backend/                   Fastify API (npm workspace member @app/backend)
+  src/
+    auth/                  Clerk JWT and plan authorization preHandlers
+    <domain>/              <domain>.route.ts + <domain>.controller.ts pairs
+    db.ts                  Drizzle client
+    main.ts                Fastify app, CORS, and route registration
+
+packages/shared/           Drizzle schema, Zod schemas, shared utils/constants
+  src/
+    db/schema.ts           The Drizzle schema (the single source of truth)
+    schemas.ts              Zod API-contract schemas (backend + frontend)
+    constants.ts, types.ts, utils.ts
 ```
 
 ## Use This Starter
@@ -203,31 +219,21 @@ cd my-saas
 npm install
 ```
 
-The backend uses `uv` and Python `3.14`:
+`npm install` sets up every workspace (the Next.js app, `backend/`, and
+`packages/shared/`) in one pass, since they're all npm workspace members.
 
-```bash
-cd backend
-uv sync
-cd ..
-```
-
-Prerequisites: Node.js, npm, uv, and Python 3.14.
+Prerequisites: Node.js and npm.
 
 ### 2. Create a PostgreSQL Database
 
 Create a PostgreSQL database and copy its connection URL. Supabase, another
-provider, or local PostgreSQL all work. Next.js and FastAPI use the same URL.
+provider, or local PostgreSQL all work. Next.js and the Fastify backend use
+the same URL.
 
 ### 3. Create a Clerk Application
 
 Create a Clerk application, enable the required sign-in methods, and copy its
-keys. FastAPI also needs the Clerk JWKS URL:
-
-```text
-https://<your-clerk-instance>/.well-known/jwks.json
-```
-
-Add a Clerk webhook:
+publishable and secret keys. Add a Clerk webhook:
 
 ```text
 https://<your-public-app-url>/api/webhooks/clerk
@@ -314,55 +320,52 @@ when a demo should apply that discount automatically.
 Create `backend/.env`:
 
 ```env
-# SQLAlchemy with Psycopg 3 requires the explicit driver prefix.
-DATABASE_URL="postgresql+psycopg://..."
+DATABASE_URL=postgresql://...
 FRONTEND_URL=http://localhost:3000
-CLERK_JWKS_URL=https://<your-clerk-instance>/.well-known/jwks.json
+CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
+PORT=8000
+HOST=127.0.0.1
 ```
 
-Both `DATABASE_URL` values must point to the same PostgreSQL database, and both
-`FRONTEND_URL` values must match. The Next.js project uses `postgresql://...`;
-the FastAPI project must use `postgresql+psycopg://...`, which explicitly tells
-SQLAlchemy to use Psycopg 3.
+Both `DATABASE_URL` values (here and in `.env.local`) must point to the same
+PostgreSQL database, in the plain `postgresql://...` form — Drizzle's
+`postgres-js` driver, used on both sides, doesn't accept a driver-suffixed
+scheme. Both `FRONTEND_URL` values must match.
 
 ### 6. Apply the Database Migrations
 
 Run this from the repository root:
 
 ```bash
-npx drizzle-kit migrate
+npm run db:migrate
 ```
 
-After changing `src/lib/db/schema.ts`, generate, inspect, and apply a migration:
+After changing `packages/shared/src/db/schema.ts`, generate, inspect, and
+apply a migration:
 
 ```bash
-npx drizzle-kit generate
-npx drizzle-kit migrate
+npm run db:generate
+npm run db:migrate
 ```
 
 Commit generated migrations with the schema change.
 
 ### 7. Start the Application
 
-Start FastAPI from the backend directory:
-
-```bash
-cd backend
-uv run uvicorn main:app --reload --env-file .env
-```
-
-In a second terminal, start Next.js:
-
 ```bash
 npm run dev
 ```
+
+This starts Next.js and the Fastify backend together.
 
 The services are available at:
 
 ```text
 Next.js: http://localhost:3000
-FastAPI: http://127.0.0.1:8000
-FastAPI health check: http://127.0.0.1:8000/healthy
+Backend (Fastify): http://127.0.0.1:8000
+Backend health check: http://127.0.0.1:8000/healthy
+Backend API docs (Swagger): http://127.0.0.1:8000/docs
 ```
 
 ### 8. Configure Local Webhook Forwarding
@@ -384,15 +387,15 @@ Use the printed signing secret as `STRIPE_WEBHOOK_SECRET` while it runs.
 2. Sign up or sign in through Clerk.
 3. Complete Stripe Checkout using test mode.
 4. Confirm the Stripe webhook creates or updates a subscription row.
-5. Confirm `/workspace/overview` loads the protected FastAPI-backed sample data.
+5. Confirm `/workspace/overview` loads the protected Fastify-backed sample data.
 6. Open Billing and confirm that **Manage billing** opens Stripe Customer Portal.
 7. Delete a Clerk user and confirm its local user and Stripe customer are
    removed.
 
 ## Authorization Model
 
-The `(subscribed)` layout protects app pages in Next.js. FastAPI product routes
-apply the same locally synchronized subscription state independently.
+The `(subscribed)` layout protects app pages in Next.js. Fastify product
+routes apply the same locally synchronized subscription state independently.
 
 For a new product page, use the Next.js helper when the page itself needs a
 plan requirement:
@@ -401,13 +404,16 @@ plan requirement:
 await requireCurrentUserSubscriptionPlan(SubscriptionPlan.Basic);
 ```
 
-For a new FastAPI router, apply the corresponding dependency:
+For a new Fastify route, add the corresponding preHandler hook:
 
-```python
-app.include_router(
-    product.router,
-    dependencies=[Depends(require_subscription_plan(SubscriptionPlan.BASIC))],
-)
+```ts
+app.register(async (subscribedApp) => {
+  subscribedApp.addHook(
+    "preHandler",
+    requireSubscriptionPlan(SubscriptionPlan.Basic),
+  );
+  subscribedApp.register(productRoutes);
+});
 ```
 
 Do not trust a browser-supplied user ID for an authenticated API request.
@@ -415,13 +421,7 @@ Do not trust a browser-supplied user ID for an authenticated API request.
 ## Development Checks
 
 ```bash
-# Next.js
-npm run lint
-npx tsc --noEmit
-
-# FastAPI
-uv run --project backend black --check backend
-uv run --project backend isort --check-only backend
+npm run check   # lint + tsc + every workspace's typecheck + the full test suite
 ```
 
 ## Production Checklist
@@ -443,25 +443,28 @@ uv run --project backend isort --check-only backend
   `sk_live_` keys in the deployment environment, then redeploy.
 - Configure the production domain, OAuth callback URLs, redirect URLs, and
   production Clerk webhook endpoint.
-- Update `CLERK_JWKS_URL` and `CLERK_WEBHOOK_SIGNING_SECRET` with values from
-  the production instance.
+- Update `CLERK_WEBHOOK_SIGNING_SECRET` with the value from the production
+  instance.
 
 ## Extending a Clone
 
-Keep SaaS concerns in Next.js and add product/domain features to FastAPI. An AI
-product can add ingestion, retrieval, conversations, agents, and streaming
-under `backend/` while reusing the starter's SaaS foundation.
+Keep SaaS concerns in Next.js and add product/domain features to the Fastify
+backend. An AI product can add ingestion, retrieval, conversations, agents,
+and streaming under `backend/` while reusing the starter's SaaS foundation.
 
 ### Add a Product API Feature
 
-1. Create a FastAPI router in `backend/routers/` with the product endpoint.
-2. Include the router in `backend/main.py` with the appropriate
-   `require_subscription_plan(...)` dependency. Keep `/healthy` public.
+1. Create `backend/src/<domain>/<domain>.route.ts` (the Fastify route + Zod
+   schema) and `<domain>.controller.ts` (the handler) with the product
+   endpoint. Add any new request/response shape to
+   `packages/shared/src/schemas.ts` so both sides share it.
+2. Register the route in `backend/src/main.ts`, inside the
+   `requireSubscriptionPlan(...)`-gated block. Keep `/healthy` public.
 3. Create a typed server-side fetch function in `src/lib/backend/` that calls
    the new endpoint through `fetchBackendData`.
-4. Call that function from a subscribed page or component. FastAPI obtains the
-   authenticated user from the Clerk JWT; do not pass a trusted user ID from
-   the browser.
+4. Call that function from a subscribed page or component. Fastify obtains
+   the authenticated user from the Clerk JWT; do not pass a trusted user ID
+   from the browser.
 
 ### Add Product Routes
 
@@ -478,12 +481,13 @@ matching `STRIPE_*_PRICE_ID`, and update its display copy in
 
 To add a new plan, update all of the following together:
 
-1. `SubscriptionPlan` in `src/types/database.ts` and the Drizzle enum in
-   `src/lib/db/schema.ts`, then generate and apply a migration.
-2. The matching SQLAlchemy `SubscriptionPlan` enum and plan levels in
-   `backend/db/models.py` and `backend/auth/subscription.py`.
-3. The Stripe Price ID and pricing copy in `src/lib/stripe/config.ts`.
-4. The recurring Price in Stripe.
+1. `SubscriptionPlan` and the plan-level/active-status constants in
+   `packages/shared/src/types.ts` and `constants.ts`, and the Drizzle enum
+   in `packages/shared/src/db/schema.ts` — one change, read by both Next.js
+   and the Fastify backend. Generate and apply a migration for the schema
+   change.
+2. The Stripe Price ID and pricing copy in `src/lib/stripe/config.ts`.
+3. The recurring Price in Stripe.
 
 Do not remove or rename an already-issued plan value without first planning a
 database and Stripe migration for existing subscriptions.

@@ -1,0 +1,81 @@
+import "server-only";
+
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import { db } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { getCurrentUser } from "../user/user";
+import { routes } from "@/lib/routes";
+import {
+  ACTIVE_SUBSCRIPTION_STATUSES,
+  SUBSCRIPTION_PLAN_LEVELS,
+} from "@app/shared/constants";
+import { subscriptions, type Subscription } from "@app/shared/db/schema";
+import type { SubscriptionPlan } from "@app/shared/types";
+
+export const getSubscriptionByUserId = async (
+  userId: number,
+): Promise<Subscription | null> => {
+  const subscription = await db.query.subscriptions.findFirst({
+    where: eq(subscriptions.userId, userId),
+  });
+
+  return subscription ?? null;
+};
+
+export const getCurrentUserSubscription =
+  async (): Promise<Subscription | null> => {
+    const user = await getCurrentUser();
+
+    if (!user) {
+      return null;
+    }
+
+    return getSubscriptionByUserId(user.id);
+  };
+
+export const isSubscriptionActive = (
+  subscription: Subscription | null,
+): subscription is Subscription => {
+  if (!subscription) {
+    return false;
+  }
+
+  return ACTIVE_SUBSCRIPTION_STATUSES.includes(subscription.status);
+};
+
+export const canAccessSubscriptionPlan = (
+  subscription: Subscription | null,
+  requiredPlan: SubscriptionPlan,
+): boolean => {
+  if (!isSubscriptionActive(subscription)) {
+    return false;
+  }
+
+  return (
+    SUBSCRIPTION_PLAN_LEVELS[subscription.plan] >=
+    SUBSCRIPTION_PLAN_LEVELS[requiredPlan]
+  );
+};
+
+export const canCurrentUserAccessSubscriptionPlan = async (
+  requiredPlan: SubscriptionPlan,
+): Promise<boolean> => {
+  const subscription = await getCurrentUserSubscription();
+
+  return canAccessSubscriptionPlan(subscription, requiredPlan);
+};
+
+export const requireCurrentUserSubscriptionPlan = async (
+  requiredPlan: SubscriptionPlan,
+): Promise<void> => {
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect(routes.signIn);
+  }
+
+  if (!(await canCurrentUserAccessSubscriptionPlan(requiredPlan))) {
+    redirect(routes.pricing);
+  }
+};
