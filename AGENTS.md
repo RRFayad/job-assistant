@@ -90,11 +90,16 @@
 Run relevant checks after changes:
 
 ```bash
-# Next.js + backend (npm workspaces) — or run each piece individually:
-# npm run lint / npx tsc --noEmit / npm run typecheck --workspaces --if-present / npm test
+# All workspaces — or run each piece individually:
+# npm run lint / prettier --check . / npm run typecheck --workspaces --if-present / npm test
 npm run check
-npx prettier --check <changed-files>
 ```
+
+`backend/`'s tests (`npm test -w @app/backend`) start the real Fastify app
+and hit it over HTTP against a real database — they need a local Postgres
+running first: `docker compose up -d` (also runs automatically before
+`npm test`/`npm run check`, via the root `pretest` script). Requires Docker
+installed locally.
 
 ## Agent skills
 
