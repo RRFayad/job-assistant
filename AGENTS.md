@@ -52,10 +52,12 @@ These apply to every workspace.
   (`src/profile/docx-export/`, see ADR-0009 and ADR-0010 — originally a
   Python sidecar, ported to TypeScript once that no longer needed a
   Python-only library).
-- PostgreSQL is the shared application database. Supabase, when used, is only
-  the database host. Do not introduce Supabase Auth or the Supabase SDK. The
-  local Postgres + pgvector container in `docker-compose.yml` is only for
-  `backend/`'s tests (`app_test`); day-to-day dev still talks to Supabase.
+- PostgreSQL is the shared application database. Production uses a managed
+  host (Neon — see `docs/deploy.md`) for the database only; do not introduce
+  Supabase Auth or any BaaS SDK. Day-to-day dev and `backend/`'s tests both
+  run against the local Postgres + pgvector container in `docker-compose.yml`
+  (`app` for dev, `app_test` for tests — same container, separate
+  databases).
 - Drizzle owns the schema and migrations in `packages/shared/src/db/`,
   imported as `@app/shared/db/schema` by both the Next.js app and
   `backend/`.

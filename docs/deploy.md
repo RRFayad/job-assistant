@@ -6,7 +6,7 @@ Production stack:
 | ------------- | ----------------------------- | --------------------- |
 | Next.js app   | Vercel project 1              | `frontend`            |
 | API (Fastify) | Vercel project 2              | `backend`             |
-| PostgreSQL    | Supabase (database host only) | –                     |
+| PostgreSQL    | Neon (database host only)     | –                     |
 | Auth          | Clerk                         | –                     |
 | Billing       | Stripe                        | –                     |
 
@@ -27,22 +27,25 @@ Production stack:
 - Check each name is free on Vercel before creating anything: the URLs feed
   `FRONTEND_URL`, `BACKEND_URL`, CORS, and the webhook endpoints.
 
-## 2. Database (Supabase)
+## 2. Database (Neon)
 
-1. Create a project → region close to the Vercel functions.
-2. Project Settings → Database → copy two connection strings:
-   - **Transaction pooler** (port 6543) → `DATABASE_URL` in both Vercel
-     projects.
-   - **Session** / direct (port 5432) → migrations only.
-3. Apply the migrations from your machine:
+1. Create a project → region close to the Vercel functions (Vercel's default
+   is Washington, D.C. → AWS `us-east-1`).
+2. **Connect** → copy two connection strings:
+   - **Pooled** ("Connection pooling" on, host has `-pooler`) → `DATABASE_URL`
+     in both Vercel projects.
+   - **Direct** (pooling off) → migrations only.
+3. In both, delete `&channel_binding=require`; keep `?sslmode=require`.
+4. Apply the migrations from your machine:
 
    ```bash
    DATABASE_URL="<direct URL>" npm run db:migrate
    ```
 
 Why: serverless functions open many short connections → the pooler shares
-them; migrations need one steady session → the pooler can switch connections
-between statements mid-migration.
+them (postgres-js prepared statements still work); migrations need one
+steady session → the pooler can switch connections between statements
+mid-migration.
 
 ## 3. Clerk
 
@@ -68,7 +71,7 @@ Environment variables:
 
 | Variable                | Value                                                |
 | ----------------------- | ---------------------------------------------------- |
-| `DATABASE_URL`          | Supabase pooled URL (step 2)                         |
+| `DATABASE_URL`          | Neon pooled URL (step 2)                             |
 | `FRONTEND_URL`          | `https://<app>.vercel.app` (CORS; no trailing slash) |
 | `CLERK_PUBLISHABLE_KEY` | Same Clerk app as the frontend                       |
 | `CLERK_SECRET_KEY`      | Same Clerk app as the frontend                       |
@@ -137,7 +140,7 @@ Frontend environment variables:
 
 On the production URL:
 
-- [ ] Sign up → a `users` row appears (Supabase → Table Editor)
+- [ ] Sign up → a `users` row appears (Neon → Tables)
 - [ ] Checkout → a `subscriptions` row → the app recognizes the plan
 - [ ] Create a Profile → export a `.docx` → opens correctly
 - [ ] `GET /healthy` on the API returns `{"status":"Healthy"}`
@@ -179,6 +182,6 @@ On the production URL:
 | Topic             | Risk → what to do                                                                                                                                              |
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Preview deploys   | Share production env vars by default → previews write to the production database; the API's CORS only accepts `FRONTEND_URL` → scope variables per environment |
-| Supabase free     | The project pauses after a week of no API activity → wake it manually in the dashboard before relying on a preview                                             |
+| Neon free         | Compute sleeps after ~5 min idle → the first request after that waits a moment to wake it                                                                      |
 | Clerk development | "Development mode" badge and usage limits → fine for a demo, not for real users                                                                                |
 | Costs             | Free tiers fit a demo; Vercel Hobby is for non-commercial use → Pro for a commercial SaaS                                                                      |
