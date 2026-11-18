@@ -1,28 +1,10 @@
 import { z } from "zod";
 
-// API contract shared by the backend and the frontend. The backend attaches
-// these schemas to routes (request/response validation and Swagger docs);
-// the frontend uses the inferred types for the data it sends and receives.
-// None of this maps to a DB table — Profile isn't persisted yet (see #4).
-
-// ---------- Errors ----------
-
-// Body of every error the API sends (401, 403, 404, 413).
-export const errorResponseSchema = z.object({
-  detail: z.string(),
-});
-
-export type ErrorResponse = z.infer<typeof errorResponseSchema>;
-
-// ---------- System ----------
-
-export const healthcheckResponseSchema = z.object({
-  status: z.string(),
-});
-
-export type HealthcheckResponse = z.infer<typeof healthcheckResponseSchema>;
-
-// ---------- Profile ----------
+// API contract for the Profile domain, shared by the backend and the
+// frontend. The backend attaches these schemas to routes (request/response
+// validation and Swagger docs); the frontend uses the inferred types for
+// the data it sends and receives. None of this maps to a DB table — Profile
+// isn't persisted yet (see #4).
 
 export const profileLinkSchema = z.object({
   id: z.string(),
