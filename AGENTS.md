@@ -1,13 +1,3 @@
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
-
 # Project Guidelines
 
 ## Scope and Workflow
@@ -45,18 +35,21 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Frontend Conventions
 
+- The Next.js app lives in `frontend/` (its own npm workspace, `@app/frontend`)
+  — not at the repo root.
 - Use TypeScript arrow functions, not function declarations.
 - Prefer Server Components. Add client components only when client-side
   behavior is necessary.
-- Keep Next.js to `backend/` calls under `src/lib/backend/`.
+- Keep Next.js to `backend/` calls under `frontend/src/lib/backend/`.
 - Application-owned Tailwind styles belong in a local `styles` object and must
   be wrapped with `tw()` so Prettier sorts the classes.
 - Use `cn()` only for runtime conditional class merging.
-- Do not refactor copied shadcn/ui components in `src/components/ui/` or Velora
-  components in `src/components/velora/` into the application styling pattern.
-- Keep marketing components in `src/components/marketing/`, subscribed-app
-  components in `src/components/subscribed/`, and theme components in
-  `src/components/theme/`.
+- Do not refactor copied shadcn/ui components in `frontend/src/components/ui/`
+  or Velora components in `frontend/src/components/velora/` into the
+  application styling pattern.
+- Keep marketing components in `frontend/src/components/marketing/`,
+  subscribed-app components in `frontend/src/components/subscribed/`, and
+  theme components in `frontend/src/components/theme/`.
 
 ## Authentication and Billing
 
@@ -65,26 +58,31 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   `subscriptions`; authorization reads local subscription state rather than
   querying Stripe on every request.
 - Server-side Next.js pages use the subscription helpers in
-  `src/lib/subscription/`. `backend/` routes use
+  `frontend/src/lib/subscription/`. `backend/` routes use
   `requireSubscriptionPlan(...)` preHandler hooks.
 - Keep Stripe SDK use, customer creation, Checkout Session creation, and
   Customer Portal Session creation server-only.
+- `BILLING_ENABLED=true` in both `frontend/.env.local` and `backend/.env` is
+  required by the dev tooling (`scripts/dev-stripe.mjs`) — always `true` here,
+  since billing is not optional in this product (unlike the generic starter
+  kit, which supports disabling it).
 
 ## Backend Conventions
 
-- `backend/`, `packages/shared/`, and the root Next.js app are npm workspaces
-  (see root `package.json`'s `workspaces`). `@app/shared` holds the Drizzle
-  schema (`db/schema.ts`), the Zod API-contract schemas (`schemas.ts`,
-  shared by `backend/` and the frontend instead of each side keeping its own
-  copy), domain constants, and small cross-cutting utils — add a new shared
-  type or schema there, not inline in `backend/` or `src/`.
+- `frontend/`, `backend/`, and `packages/shared/` are npm workspaces (see root
+  `package.json`'s `workspaces`). `@app/shared` holds the Drizzle schema
+  (`db/schema.ts`), the Zod API-contract schemas (`schemas/`, one file per
+  feature, barreled through `schemas/index.ts`, shared by `backend/` and the
+  frontend instead of each side keeping its own copy), domain constants, and
+  small cross-cutting utils — add a new shared type or schema there, not
+  inline in `backend/` or `frontend/src/`.
 - Place product routes in `backend/src/<domain>/<domain>.route.ts` (the
   Fastify route + Zod request/response schema, via
   `fastify-type-provider-zod`) and `<domain>.controller.ts` (the handler);
   keep authentication and subscription preHandlers under `backend/src/auth/`.
 - Start the Fastify backend from the repo root with
-  `npm run dev -w @app/backend`, or run both it and Next.js together via the
-  root `npm run dev`.
+  `npm run dev -w @app/backend`, or run everything together via the root
+  `npm run dev` (frontend, backend, and the Stripe/Clerk webhook tunnels).
 - CORS accepts only `FRONTEND_URL`; keep it aligned with the Next.js app URL.
 
 ## Validation
