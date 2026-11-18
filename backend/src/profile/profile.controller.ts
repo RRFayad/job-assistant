@@ -10,6 +10,7 @@ import { getEnvVar } from "@app/shared/utils";
 import type { MultipartFile } from "@fastify/multipart";
 import type { FastifyReply } from "fastify";
 
+import { HttpError } from "../errors";
 import { suggest } from "./suggestions";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
@@ -54,16 +55,14 @@ export const suggestEditHandler = async (
 
 export const extractProfileHandler = async (
   file: MultipartFile,
-  reply: FastifyReply,
-): Promise<Profile | undefined> => {
+): Promise<Profile> => {
   // Mocked extraction: ignores the uploaded file's actual content and
   // returns canned data for the Candidate to review — no real parsing or
   // AI yet (see #9).
   await file.toBuffer(); // Drains the stream; content is intentionally unused.
 
   if (file.file.truncated) {
-    reply.code(413).send({ detail: "File is too large (max 10MB)" });
-    return undefined;
+    throw new HttpError(413, "File is too large (max 10MB)");
   }
 
   return {
@@ -128,8 +127,7 @@ export const exportProfileDocxHandler = async (
   });
 
   if (!response.ok) {
-    reply.code(502).send({ detail: "Failed to export Profile" });
-    return;
+    throw new HttpError(502, "Failed to export Profile");
   }
 
   // Buffered, not streamed: a generated .docx is at most a few hundred KB,

@@ -2,6 +2,7 @@ import type { MultipartFile } from "@fastify/multipart";
 import type { FastifyReply } from "fastify";
 import { describe, expect, it, vi } from "vitest";
 
+import { HttpError } from "../errors";
 import {
   extractProfileHandler,
   getProfilesHandler,
@@ -58,24 +59,18 @@ describe("saveProfileHandler", () => {
 
 describe("extractProfileHandler", () => {
   it("returns a populated Profile for a file under the size limit", async () => {
-    const reply = fakeReply();
+    const profile = await extractProfileHandler(fakeMultipartFile(false));
 
-    const profile = await extractProfileHandler(
-      fakeMultipartFile(false),
-      reply,
-    );
-
-    expect(profile?.header.fullName).toBeTruthy();
-    expect(profile?.sections.length).toBeGreaterThan(0);
-    expect(reply.code).not.toHaveBeenCalled();
+    expect(profile.header.fullName).toBeTruthy();
+    expect(profile.sections.length).toBeGreaterThan(0);
   });
 
-  it("replies 413 for a file over the size limit", async () => {
-    const reply = fakeReply();
-
-    const profile = await extractProfileHandler(fakeMultipartFile(true), reply);
-
-    expect(profile).toBeUndefined();
-    expect(reply.code).toHaveBeenCalledWith(413);
+  it("throws a 413 HttpError for a file over the size limit", async () => {
+    await expect(
+      extractProfileHandler(fakeMultipartFile(true)),
+    ).rejects.toMatchObject({
+      statusCode: 413,
+      message: "File is too large (max 10MB)",
+    } satisfies Partial<HttpError>);
   });
 });

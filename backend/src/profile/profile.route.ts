@@ -7,6 +7,7 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 
+import { HttpError } from "../errors";
 import {
   MAX_UPLOAD_BYTES,
   extractProfileHandler,
@@ -89,16 +90,16 @@ export const profileRoutes = async (app: FastifyInstance) => {
         },
       },
     },
-    async (request, reply) => {
+    async (request) => {
       const file = await request.file({
         limits: { fileSize: MAX_UPLOAD_BYTES },
       });
 
       if (!file) {
-        return reply.code(400).send({ detail: "No file uploaded" });
+        throw new HttpError(400, "No file uploaded");
       }
 
-      return extractProfileHandler(file, reply);
+      return extractProfileHandler(file);
     },
   );
 
