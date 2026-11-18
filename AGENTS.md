@@ -30,19 +30,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Next.js owns UI, Clerk authentication, Clerk and Stripe webhooks, billing,
   and SaaS/account concerns.
 - `backend/` (Fastify, TypeScript) owns product/domain APIs and product
-  logic — AI, RAG, agents, streaming, and real persistence, as those get
-  built.
-- `docx-service/` is a narrow Python sidecar with exactly one job: Profile
-  JSON in, a `.docx` export out. It exists because `python-docx`'s
-  template-cloning OOXML manipulation (see ADR-0009) has no equivalent
-  Node library — it is not a place for new product logic, persistence, or
-  auth of its own. `backend/` calls it server-to-server with a shared
-  `X-Internal-Api-Key` header; it has no other access control.
+  logic — AI, RAG, agents, streaming, real persistence, and `.docx` export
+  (`src/profile/docx-export/`, see ADR-0009 and ADR-0010 — originally a
+  Python sidecar, ported to TypeScript once that no longer needed a
+  Python-only library).
 - PostgreSQL is the shared application database. Supabase, when used, is only
   the database host. Do not introduce Supabase Auth or the Supabase SDK.
 - Drizzle owns the schema and migrations in `packages/shared/src/db/`,
   imported as `@app/shared/db/schema` by both the Next.js app and
-  `backend/`. `docx-service/` has no database access at all.
+  `backend/`.
 - `backend/` must derive identity from the verified Clerk JWT (via
   `@clerk/fastify`). Never trust a browser-supplied user ID for
   authenticated identity.
@@ -90,12 +86,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   `npm run dev -w @app/backend`, or run both it and Next.js together via the
   root `npm run dev`.
 - CORS accepts only `FRONTEND_URL`; keep it aligned with the Next.js app URL.
-- `docx-service/` is a separate Python project (its own `pyproject.toml`,
-  managed with `uv`), not an npm workspace member. Start it from
-  `docx-service/` with `uv run uvicorn main:app --reload --env-file .env`.
-  Format its Python with Black and sort imports with isort. Keep it to
-  exactly its one job (see Architecture Boundaries) — a new product
-  endpoint belongs in `backend/`, not here.
 
 ## Validation
 
@@ -106,11 +96,6 @@ Run relevant checks after changes:
 # npm run lint / npx tsc --noEmit / npm run typecheck --workspaces --if-present / npm test
 npm run check
 npx prettier --check <changed-files>
-
-# docx-service (the Python sidecar)
-uv run --project docx-service black --check docx-service
-uv run --project docx-service isort --check-only docx-service
-npx --yes pyright docx-service  # docx-service/pyrightconfig.json — production code should be clean
 ```
 
 ## Agent skills

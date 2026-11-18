@@ -6,11 +6,15 @@ import {
   type Profile,
   type SuggestionTarget,
 } from "@app/shared/schemas";
-import { getEnvVar } from "@app/shared/utils";
 import type { MultipartFile } from "@fastify/multipart";
 import type { FastifyReply } from "fastify";
 
 import { HttpError } from "../errors";
+import {
+  buildExportFilename,
+  buildResumeDocument,
+  contentDisposition,
+} from "./docx-export/docx-export";
 import { suggest } from "./suggestions";
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
@@ -108,43 +112,21 @@ export const extractProfileHandler = async (
   };
 };
 
-// ---------- Export (proxied to the docx-service sidecar) ----------
+// ---------- Export (.docx, generated locally — see ./docx-export) ----------
 
 export const exportProfileDocxHandler = async (
   profile: Profile,
   reply: FastifyReply,
 ): Promise<void> => {
-  const docxServiceUrl = getEnvVar("DOCX_SERVICE_URL");
-  const internalApiKey = getEnvVar("INTERNAL_API_KEY");
-
-  const response = await fetch(`${docxServiceUrl}/export`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Internal-Api-Key": internalApiKey,
-    },
-    body: JSON.stringify(profile),
-  });
-
-  if (!response.ok) {
-    throw new HttpError(502, "Failed to export Profile");
-  }
-
-  // Buffered, not streamed: a generated .docx is at most a few hundred KB,
-  // and fetch()'s response.body is a WHATWG ReadableStream, which
-  // reply.send() silently turns into a 0-byte body instead of erroring —
-  // buffering sidesteps that Node/Fastify stream-interop gap entirely.
-  const body = Buffer.from(await response.arrayBuffer());
+  const body = await buildResumeDocument(profile);
+  const filename = buildExportFilename(profile);
 
   reply
     .code(200)
     .header(
       "content-type",
-      response.headers.get("content-type") ?? "application/octet-stream",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-    .header(
-      "content-disposition",
-      response.headers.get("content-disposition") ?? "attachment",
-    )
+    .header("content-disposition", contentDisposition(filename))
     .send(body);
 };

@@ -1,7 +1,7 @@
-// Mirrored by backend/services/markdown_lite.py (targets structured
-// segments/blocks for real Word runs instead of an HTML string) — a syntax
-// change here needs the same change made there, since nothing else keeps
-// the two in sync.
+// Mirrored by backend/src/profile/docx-export/markdown-lite.ts (targets
+// structured segments/blocks for real Word runs instead of an HTML string)
+// — a syntax change here needs the same change made there, since nothing
+// else keeps the two in sync.
 const HTML_ESCAPES: Record<string, string> = {
   "&": "&amp;",
   "<": "&lt;",

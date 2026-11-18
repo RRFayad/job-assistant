@@ -114,7 +114,6 @@ export const profileRoutes = async (app: FastifyInstance) => {
         response: {
           401: errorResponseSchema,
           403: errorResponseSchema,
-          502: errorResponseSchema,
         },
       },
     },
