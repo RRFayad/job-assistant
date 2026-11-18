@@ -63,11 +63,11 @@
   --animate-meteor: meteor 5s linear infinite;
   --animate-retro-grid: retro-grid 18s linear infinite;
   @keyframes retro-grid {
-  from {
-    transform: translateY(-50%);
+    from {
+      transform: translateY(-50%);
     }
-  to {
-    transform: translateY(0);
+    to {
+      transform: translateY(0);
     }
   }
 }
@@ -159,8 +159,13 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans scroll-smooth;
+    @apply scroll-smooth font-sans;
   }
+}
+
+button:disabled {
+  pointer-events: auto;
+  cursor: not-allowed;
 }
 
 @keyframes marquee {
