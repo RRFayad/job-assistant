@@ -20,7 +20,11 @@ export const createStripeCustomer = async (user: User) => {
       },
     },
     {
-      idempotencyKey: `customer-${user.id}`,
+      // Keyed on clerkId, not the local integer id: Stripe caches idempotency
+      // keys for 24h independent of our database, but the local id can be
+      // recycled across a dev-DB reset (two different Clerk identities
+      // landing on the same local id) — clerkId never is.
+      idempotencyKey: `customer-${user.clerkId}`,
     },
   );
   return stripeCustomer;
