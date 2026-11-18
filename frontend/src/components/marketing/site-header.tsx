@@ -50,7 +50,7 @@ export const SiteHeader = () => {
           </Show>
           {siteConfig.github && (
             <Button variant="outline" size="sm" asChild>
-              <a href={siteConfig.github} rel="noopener" target="_blank">
+              <a href={siteConfig.githubReadme} rel="noopener" target="_blank">
                 <StarIcon />
                 Github Repo
               </a>

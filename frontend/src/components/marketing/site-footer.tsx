@@ -10,7 +10,7 @@ const groups = [
         {
           title: "Resources",
           links: [
-            { text: "GitHub", href: siteConfig.github },
+            { text: "GitHub", href: siteConfig.githubReadme },
             {
               text: "README",
               href: `${siteConfig.github}/blob/main/README.md`,

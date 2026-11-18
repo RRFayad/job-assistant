@@ -24,7 +24,7 @@ const SubscribedLayout = async ({ children }: SubscribedLayoutProps) => {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset className={styles.inset}>
-        <AppHeader github={siteConfig.github} />
+        <AppHeader github={siteConfig.githubReadme} />
         <div className={styles.content}>{children}</div>
       </SidebarInset>
     </SidebarProvider>

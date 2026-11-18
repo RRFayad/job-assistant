@@ -264,7 +264,11 @@ const LandingPage = async () => {
                 </form>
                 {siteConfig.github && (
                   <Button variant="ghost" size="lg" asChild>
-                    <a href={siteConfig.github} rel="noopener" target="_blank">
+                    <a
+                      href={siteConfig.githubReadme}
+                      rel="noopener"
+                      target="_blank"
+                    >
                       View on Github
                     </a>
                   </Button>
